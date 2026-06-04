@@ -113,15 +113,30 @@ class KasirController extends Controller
         ], 500);
     }
 }
-    public function riwayatPesanan()
-    {
-        $pesanan = Pesanan::where('id_kasir', Auth::id())
-            ->with('detailPesanan.menu', 'detailPesanan.toppings')
-            ->orderBy('tanggal', 'desc')
-            ->paginate(15);
+public function riwayatPesanan()
+{
+    $pesanan = Pesanan::where('id_kasir', Auth::id())
+        ->with('detailPesanan.menu', 'detailPesanan.toppings')
+        ->orderBy('tanggal', 'asc')
+        ->paginate(15);
 
-        return view('kasir.riwayat-pesanan', compact('pesanan'));
-    }
+    // Ambil bulan & tahun yang ada di data pesanan kasir ini
+    $periode = Pesanan::where('id_kasir', Auth::id())
+        ->selectRaw('MONTH(tanggal) as bulan, YEAR(tanggal) as tahun')
+        ->distinct()
+        ->orderBy('tahun', 'desc')
+        ->orderBy('bulan', 'asc')
+        ->get();
+
+    $bulanTersedia = $periode->pluck('bulan')->unique()->values();
+    $tahunTersedia = $periode->pluck('tahun')->unique()->values();
+
+    return view('kasir.riwayat-pesanan', compact(
+        'pesanan',
+        'bulanTersedia',
+        'tahunTersedia'
+    ));
+}
 
     public function getHargaByUkuran(Request $request)
     {
@@ -156,7 +171,7 @@ class KasirController extends Controller
             $query->where('nama_customer', 'like', '%' . $request->search . '%');
         }
 
-        $orders = $query->orderBy('tanggal', 'desc')
+        $orders = $query->orderBy('tanggal', 'asc')
             ->paginate(15);
 
         return response()->json($orders);

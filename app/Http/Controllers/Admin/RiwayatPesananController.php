@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Models\DetailPesanan;
 
 class RiwayatPesananController extends Controller
 {
@@ -20,9 +21,24 @@ class RiwayatPesananController extends Controller
     public function index()
     {
         $pesanan = Pesanan::with('kasir', 'detailPesanan.menu')
-            ->orderBy('tanggal', 'desc')
+            ->orderBy('tanggal', 'asc')
             ->paginate(15);
-        return view('admin.riwayat-pesanan', compact('pesanan'));
+
+        // Ambil bulan & tahun yang ada di data pesanan
+        $periode = Pesanan::selectRaw('MONTH(tanggal) as bulan, YEAR(tanggal) as tahun')
+            ->distinct()
+            ->orderBy('tahun', 'desc')
+            ->orderBy('bulan', 'asc')
+            ->get();
+
+        $bulanTersedia = $periode->pluck('bulan')->unique();
+        $tahunTersedia = $periode->pluck('tahun')->unique();
+
+        return view('admin.riwayat-pesanan', compact(
+            'pesanan',
+            'bulanTersedia',
+            'tahunTersedia'
+        ));
     }
 
     public function getOrders(Request $request)
@@ -36,35 +52,38 @@ class RiwayatPesananController extends Controller
             $query->whereYear('tanggal', $request->year);
         }
         
-        $orders = $query->orderBy('tanggal', 'desc')->paginate(15);
+        // PERBAIKAN: Ubah 'desc' menjadi 'asc' agar urut dari tanggal awal
+        $orders = $query->orderBy('tanggal', 'asc')->paginate(15);
         
         return response()->json($orders);
     }
 
-public function getOrderDetail($id)
-{
-    $order = Pesanan::with(['kasir', 'detailPesanan.menu', 'detailPesanan.toppings'])
-        ->findOrFail($id);
-    
-    // Format topping untuk setiap detail pesanan
-    foreach ($order->detailPesanan as $detail) {
-        $detail->topping_list = $detail->toppings->map(function($topping) {
-            return [
-                'nama' => $topping->nama_topping,
-                'harga' => $topping->harga,
-                'jumlah' => $topping->pivot->jumlah ?? 1
-            ];
-        });
+    public function getOrderDetail($id)
+    {
+        $order = Pesanan::with(['kasir', 'detailPesanan.menu', 'detailPesanan.toppings'])
+            ->findOrFail($id);
+        
+        // Format topping untuk setiap detail pesanan
+        foreach ($order->detailPesanan as $detail) {
+            $detail->topping_list = $detail->toppings->map(function($topping) {
+                return [
+                    'nama' => $topping->nama_topping,
+                    'harga' => $topping->harga,
+                    'jumlah' => $topping->pivot->jumlah ?? 1
+                ];
+            });
+        }
+        
+        return response()->json($order);
     }
-    
-    return response()->json($order);
-}
+
 public function exportOrdersExcel(Request $request)
 {
     $month = $request->month;
     $year = $request->year;
     
-    $query = Pesanan::with('kasir')->orderBy('tanggal', 'desc');
+    $query = Pesanan::with('kasir')
+        ->orderBy('tanggal', 'asc');
     
     if ($month) {
         $query->whereMonth('tanggal', $month);
@@ -88,7 +107,7 @@ public function exportOrdersExcel(Request $request)
     echo '<th>Customer</th>';
     echo '<th>Meja</th>';
     echo '<th>Total</th>';
-    echo '<th>Metode Bayar</th>';
+    echo '<th>Metode Bayar</th>';  // Sudah ada kolom Metode Bayar
     echo '</tr>';
     
     $no = 1;
@@ -96,7 +115,16 @@ public function exportOrdersExcel(Request $request)
         $date = new \DateTime($order->tanggal);
         $formattedDate = $date->format('d/m/Y H:i:s');
         $mejaText = $order->no_meja ? 'Meja ' . $order->no_meja : 'Take Away';
-        $metodeText = $order->metode_bayar == 'tunai' ? 'Tunai' : 'QRIS';
+        
+        // PERBAIKAN: Pastikan metode bayar ditampilkan dengan benar
+        $metodeText = '';
+        if ($order->metode_bayar == 'tunai') {
+            $metodeText = 'Tunai';
+        } elseif ($order->metode_bayar == 'qris') {
+            $metodeText = 'QRIS';
+        } else {
+            $metodeText = '-';
+        }
         
         echo '<tr>';
         echo '<td>' . $no . '</td>';
@@ -104,7 +132,7 @@ public function exportOrdersExcel(Request $request)
         echo '<td>' . $order->no_invoice . '</td>';
         echo '<td>' . $order->nama_customer . '</td>';
         echo '<td>' . $mejaText . '</td>';
-        echo '<td>' . $order->total_bayar . '</td>';
+        echo '<td>Rp ' . number_format($order->total_bayar, 0, ',', '.') . '</td>';
         echo '<td>' . $metodeText . '</td>';
         echo '</tr>';
         $no++;
@@ -113,13 +141,14 @@ public function exportOrdersExcel(Request $request)
     echo '</table>';
     exit;
 }
+
     public function exportOrdersPDF(Request $request)
     {
         $month = $request->month;
         $year = $request->year;
         
         $query = Pesanan::with('kasir', 'detailPesanan.menu', 'detailPesanan.toppings')
-            ->orderBy('tanggal', 'desc');
+            ->orderBy('tanggal', 'asc');  // PERBAIKAN: 'desc' diubah jadi 'asc'
         
         if ($month) {
             $query->whereMonth('tanggal', $month);

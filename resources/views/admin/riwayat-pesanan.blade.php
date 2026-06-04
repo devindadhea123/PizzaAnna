@@ -15,30 +15,48 @@
         <div class="flex items-center gap-4 flex-wrap">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Bulan</label>
-                <select id="filterMonth" class="border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
-                    <option value="">-- Pilih Bulan --</option>
-                    <option value="1">Januari</option>
-                    <option value="2">Februari</option>
-                    <option value="3">Maret</option>
-                    <option value="4">April</option>
-                    <option value="5">Mei</option>
-                    <option value="6">Juni</option>
-                    <option value="7">Juli</option>
-                    <option value="8">Agustus</option>
-                    <option value="9">September</option>
-                    <option value="10">Oktober</option>
-                    <option value="11">November</option>
-                    <option value="12">Desember</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tahun</label>
-                <select id="filterYear" class="border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
-                    <option value="">-- Pilih Tahun --</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                    <option value="2027">2027</option>
-                </select>
+               <select id="filterMonth"
+    class="border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
+
+    <option value="">-- Pilih Bulan --</option>
+
+            @php
+                $namaBulan = [
+                    1 => 'Januari',
+                    2 => 'Februari',
+                    3 => 'Maret',
+                    4 => 'April',
+                    5 => 'Mei',
+                    6 => 'Juni',
+                    7 => 'Juli',
+                    8 => 'Agustus',
+                    9 => 'September',
+                    10 => 'Oktober',
+                    11 => 'November',
+                    12 => 'Desember'
+                ];
+            @endphp
+
+            @foreach($bulanTersedia as $bulan)
+                <option value="{{ $bulan }}">
+                    {{ $namaBulan[$bulan] }}
+                </option>
+            @endforeach
+        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tahun</label>
+                        <select id="filterYear"
+            class="border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
+
+            <option value="">-- Pilih Tahun --</option>
+
+            @foreach($tahunTersedia as $tahun)
+                <option value="{{ $tahun }}">
+                    {{ $tahun }}
+                </option>
+            @endforeach
+        </select>
             </div>
             <button onclick="filterOrders()" class="bg-[#D73535] text-white px-6 py-2 rounded-xl hover:bg-red-700 transition mt-5">
                 <i class="bi bi-search"></i> Filter
@@ -50,16 +68,16 @@
         </div>
     </div>
     
-    <!-- Export Buttons -->
-    <div class="flex justify-end gap-3 mb-4">
-        <button onclick="exportToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition flex items-center gap-2">
-            <i class="bi bi-file-excel"></i> Export Excel
-        </button>
-        <button onclick="exportToPDF()" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition flex items-center gap-2">
-            <i class="bi bi-file-pdf"></i> Export PDF
-        </button>
-    </div>
-    
+<div class="flex justify-end gap-3 mb-4">
+<div class="flex justify-end gap-3 mb-4">
+    <a href="#" onclick="exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition flex items-center gap-2">
+        <i class="bi bi-file-earmark-excel"></i> Export Excel
+    </a>
+    <a href="#" onclick="exportPDF()" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition flex items-center gap-2">
+        <i class="bi bi-file-pdf"></i> Export PDF
+    </a>
+</div>
+</div>
     <!-- Table Section -->
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -139,6 +157,40 @@
     let currentPage = 1;
     let totalPages = 1;
     
+
+    function exportExcel() {
+    let bulan = document.getElementById('filterMonth').value;
+    let tahun = document.getElementById('filterYear').value;
+    
+    let url = "{{ route('export.detail-excel') }}";
+    let params = [];
+    
+    if (bulan) params.push('bulan=' + bulan);
+    if (tahun) params.push('tahun=' + tahun);
+    
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+    
+    window.location.href = url;
+}
+
+function exportPDF() {
+    let bulan = document.getElementById('filterMonth').value;
+    let tahun = document.getElementById('filterYear').value;
+    
+    let url = "{{ route('export.detail-pdf') }}";
+    let params = [];
+    
+    if (bulan) params.push('bulan=' + bulan);
+    if (tahun) params.push('tahun=' + tahun);
+    
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+    
+    window.location.href = url;
+}
     function formatRupiah(angka) {
         if (!angka && angka !== 0) return '0';
         return Math.round(angka).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -481,27 +533,50 @@
         printWindow.close();
     }
     
-    function exportToExcel() {
-        const month = document.getElementById('filterMonth').value;
-        const year = document.getElementById('filterYear').value;
-        let url = '/api/admin/orders/export/excel';
-        let params = [];
-        if (month) params.push('month=' + month);
-        if (year) params.push('year=' + year);
-        if (params.length > 0) url = url + '?' + params.join('&');
-        window.location.href = url;
+function exportToExcel() {
+    const month = document.getElementById('filterMonth').value;
+    const year = document.getElementById('filterYear').value;
+
+    let url = '/api/admin/orders/export/excel';
+
+    let params = [];
+
+    if (month) {
+        params.push('month=' + month);
     }
 
-    function exportToPDF() {
-        const month = document.getElementById('filterMonth').value;
-        const year = document.getElementById('filterYear').value;
-        let url = '/api/admin/orders/export/pdf';
-        let params = [];
-        if (month) params.push('month=' + month);
-        if (year) params.push('year=' + year);
-        if (params.length > 0) url = url + '?' + params.join('&');
-        window.location.href = url;
+    if (year) {
+        params.push('year=' + year);
     }
+
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+
+    window.location.href = url;
+}
+function exportToPDF() {
+    const month = document.getElementById('filterMonth').value;
+    const year = document.getElementById('filterYear').value;
+
+    let url = '/api/admin/orders/export/pdf';
+
+    let params = [];
+
+    if (month) {
+        params.push('month=' + month);
+    }
+
+    if (year) {
+        params.push('year=' + year);
+    }
+
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+
+    window.location.href = url;
+}
     
     document.addEventListener('DOMContentLoaded', function() {
         console.log("Halaman riwayat pesanan dimuat");

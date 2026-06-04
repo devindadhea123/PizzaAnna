@@ -12,6 +12,7 @@ use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Api\MenuApiController;
 use App\Http\Controllers\Admin\ToppingController;
 use App\Http\Controllers\Admin\KelolaAkunController;
+use App\Http\Controllers\LaporanController;
 
 // ==================== GUEST ROUTES ====================
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
@@ -117,3 +118,6 @@ Route::middleware(['auth', 'role:kasir'])->prefix('api/kasir')->group(function (
     Route::get('/orders', [KasirController::class, 'getOrders']);
     Route::get('/orders/{id}', [KasirController::class, 'getOrderDetail']);
 });
+
+Route::get('/export/detail-excel', [LaporanController::class, 'exportDetailExcel'])->name('export.detail-excel')->middleware('auth');
+Route::get('/export/detail-pdf', [LaporanController::class, 'exportDetailPDF'])->name('export.detail-pdf')->middleware('auth');

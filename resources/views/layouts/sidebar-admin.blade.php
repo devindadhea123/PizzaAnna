@@ -6,11 +6,11 @@
 <div class="flex items-center gap-3 mb-8">
     <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shadow-lg">
         <img src="{{ asset('images/logo-pizzaanna.jpeg') }}" 
-             alt="Logo PizzaAnna" 
+             alt="Logo PizzAnna" 
              class="w-full h-full object-cover">
     </div>
     <div>
-        <h1 class="font-bold text-xl">Pizza<span class="text-[#D73535]">Anna</span></h1>
+        <h1 class="font-bold text-xl">Pizz<span class="text-[#D73535]">Anna</span></h1>
         <p class="text-xs text-gray-400">Admin Panel</p>
     </div>
 </div>

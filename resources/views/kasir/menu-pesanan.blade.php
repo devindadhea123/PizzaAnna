@@ -89,7 +89,7 @@
                      onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\"bi bi-pizza text-white text-sm bg-[#D73535] w-8 h-8 rounded-full flex items-center justify-center\"></i>'">
             </div>
             <div>
-                <h1 class="font-bold text-lg">Pizza<span class="text-[#D73535]">Anna</span></h1>
+                <h1 class="font-bold text-lg">Pizz<span class="text-[#D73535]">Anna</span></h1>
                 <p class="text-xs text-gray-500">Kasir Panel</p>
             </div>
         </div>
@@ -141,7 +141,7 @@
 <section id="menuSection" class="py-8 bg-gray-50">
     <div class="container mx-auto px-4">
         <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold">MENU PIZZAANNA</h2>
+            <h2 class="text-2xl font-bold">Menu PizzAnna</h2>
             <p class="text-gray-500 text-sm mt-1">Pilih menu favorit customer</p>
         </div>
 
@@ -244,7 +244,7 @@
     <div class="bg-white rounded-2xl w-full max-w-md mx-4 shadow-2xl modal-struk">
         <div class="bg-gradient-to-r from-[#D73535] to-red-700 text-white p-4 rounded-t-2xl text-center">
             <i class="bi bi-pizza text-2xl"></i>
-            <h2 class="text-xl font-bold">PIZZAANNA</h2>
+            <h2 class="text-xl font-bold">PizzAnna</h2>
             <p class="text-xs opacity-90">Jl. Pengging, Boyolali</p>
         </div>
         <div class="p-5" id="strukContent"></div>  <!-- PASTIKAN ID INI ADA -->

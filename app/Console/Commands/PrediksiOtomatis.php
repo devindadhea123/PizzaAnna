@@ -14,7 +14,7 @@ class PrediksiOtomatis extends Command
     {
         $now = now();
 
-        if ($now->day != 3){
+        if ($now->day != 4){
             $this->info('Bukan tanggal prediksi.');
             return;
         }

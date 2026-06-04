@@ -64,9 +64,9 @@ class RiwayatPrediksiController extends Controller
             $existingPrediksi = RiwayatPrediksi::where('bulan_target', $bulanTarget)->first();
             
             $today = now();
-            $HARI_PREDIKSI = 3;      
-            $JAM_DEADLINE =20;     
-            $MENIT_DEADLINE = 59;
+            $HARI_PREDIKSI = 4;      
+            $JAM_DEADLINE =23;     
+            $MENIT_DEADLINE = 40;
             
             $isPredictionDay = ($today->day == $HARI_PREDIKSI);
             $currentHour = (int)$today->format('H');
