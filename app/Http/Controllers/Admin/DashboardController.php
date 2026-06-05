@@ -80,8 +80,6 @@ class DashboardController extends Controller
         $qrisAmount = Pesanan::whereMonth('tanggal', $month)->whereYear('tanggal', $year)->where('metode_bayar', 'qris')->sum('total_bayar');
         
         return response()->json([
-            'totalKaryawan' => $totalKaryawan,
-            'hadirHariIni' => $hadirHariIni,
             'pendapatanHariIni' => $pendapatanHariIni,
             'pendapatanBulanIni' => $pendapatanBulanIni,
             'persentaseHarian' => round($persentaseHarian, 1),
@@ -191,5 +189,7 @@ class DashboardController extends Controller
                 'defaultYear' => date('Y')
             ], 500);
         }
+
+        
     }
 }

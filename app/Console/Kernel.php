@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void  // ⭐ TAMBAHKAN METHOD INI
     {
         // Jadwal prediksi otomatis setiap tanggal 6 pukul 17:10
-        $schedule->command('prediksi:otomatis')->cron('10 17 6 * *');
+        $schedule->command('prediksi:otomatis')->cron('00 22 5 * *');
     }
     
     protected function commands(): void

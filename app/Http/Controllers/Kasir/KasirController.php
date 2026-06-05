@@ -74,29 +74,37 @@ class KasirController extends Controller
             'metode_bayar' => $request->payment_method
         ]);
 
-        foreach ($request->items as $item) {
-            $hargaSatuan = isset($item['harga']) && $item['qty'] > 0 
-                ? (int) $item['harga'] / (int) $item['qty']
-                : (int) $item['harga'];
-            
-            $detail = DetailPesanan::create([
-                'id_pesanan' => $pesanan->id_pesanan,
-                'id_menu' => $item['id_menu'],
-                'harga_satuan' => $hargaSatuan,
-                'jumlah' => (int) $item['qty'],
-                'subtotal' => (int) $item['harga'],
-            ]);
+foreach ($request->items as $item) {
+    // ✅ AMAN - Gunakan null coalescing operator
+    $id_menu = $item['id_menu'] ?? null;
+    $qty = $item['qty'] ?? 1;
+    $harga = $item['harga'] ?? 0;
+    $topping_ids = $item['topping_ids'] ?? [];
+    
+    // ✅ Skip jika tidak ada id_menu
+    if (!$id_menu) {
+        continue;
+    }
+    
+    $hargaSatuan = $harga > 0 && $qty > 0 ? $harga / $qty : $harga;
+    
+    $detail = DetailPesanan::create([
+        'id_pesanan' => $pesanan->id_pesanan,
+        'id_menu' => $id_menu,
+        'harga_satuan' => $hargaSatuan,
+        'jumlah' => (int) $qty,
+        'subtotal' => (int) $harga,
+    ]);
 
-            if (!empty($item['topping_ids']) && is_array($item['topping_ids'])) {
-                foreach ($item['topping_ids'] as $toppingId) {
-                    DB::table('detail_pesanan_topping')->insert([
-                        'detail_pesanan_id' => $detail->id_detail,
-                        'topping_id' => $toppingId,
-                    ]);
-                }
-            }
+    if (!empty($topping_ids) && is_array($topping_ids)) {
+        foreach ($topping_ids as $toppingId) {
+            DB::table('detail_pesanan_topping')->insert([
+                'detail_pesanan_id' => $detail->id_detail,
+                'topping_id' => $toppingId,
+            ]);
         }
-        
+    }
+}
         DB::commit();
         
         return response()->json([

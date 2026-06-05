@@ -529,7 +529,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.need_auto_prediction && !autoPredictionTriggered && !predictionChecked) {
-                        console.log('⏰ Waktunya auto prediksi! Menjalankan...');
+                        console.log('Waktunya auto prediksi! Menjalankan...');
                         clearInterval(intensiveInterval);
                         intensiveInterval = null;
                         lakukanPrediksiOtomatis();
@@ -654,7 +654,7 @@
                         ${data.rekomendasi.map(promo => `
                             <div class="bg-white/20 rounded-lg p-3 hover:bg-white/30 transition">
                                 <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-2xl">${promo.icon || '🎁'}</span>
+                                    <span class="text-2xl">${promo.icon || ''}</span>
                                     <span class="font-semibold text-sm">${promo.judul}</span>
                                 </div>
                                 <p class="text-xs">${promo.deskripsi}</p>
@@ -782,7 +782,7 @@
                 // PRIORITAS 3: SUDAH LEWAT DEADLINE - JALANKAN AUTO PREDIKSI LANGSUNG
                 if (data.is_prediction_day && !data.is_before_deadline && !data.has_prediction) {
                     if (data.need_auto_prediction && !autoPredictionTriggered && !predictionChecked) {
-                        console.log('⏰ Deadline tercapai! Menjalankan prediksi otomatis...');
+                        console.log('Deadline tercapai! Menjalankan prediksi otomatis...');
                         
                         btn.disabled = true;
                         btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Prediksi Otomatis...';
@@ -845,7 +845,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.is_prediction_day && !data.has_prediction && data.is_before_deadline) {
-                    console.log('📡 Memulai intensive check untuk auto prediksi');
+                    console.log('Memulai intensive check untuk auto prediksi');
                     startIntensiveCheck();
                 }
             })
