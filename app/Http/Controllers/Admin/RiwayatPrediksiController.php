@@ -108,8 +108,8 @@ public function getPredictionStatus()
             
             $today = now();
             $HARI_PREDIKSI = 5;      
-            $JAM_DEADLINE =21;     
-            $MENIT_DEADLINE = 00;
+            $JAM_DEADLINE =22;     
+            $MENIT_DEADLINE = 05;
             
             $isPredictionDay = ($today->day == $HARI_PREDIKSI);
             $currentHour = (int)$today->format('H');

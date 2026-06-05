@@ -19,7 +19,7 @@ class PrediksiOtomatis extends Command
         // ✅ SETTING JADWAL PREDIKSI
         $HARI_PREDIKSI = 5;      // Tanggal prediksi
         $JAM_DEADLINE = 22;      // Jam deadline (setelah jam ini auto jalan)
-        $MENIT_DEADLINE = 00;    // Menit deadline
+        $MENIT_DEADLINE = 05;    // Menit deadline
         
         // ✅ CEK APAKAH HARI INI TANGGAL PREDIKSI
         if ($now->day != $HARI_PREDIKSI) {
