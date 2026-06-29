@@ -22,8 +22,8 @@
         <div class="w-72 bg-gray-800"></div>
     @endauth
     
-    <main class="flex-1 overflow-y-auto">
-        @yield('content')
+<main class="flex-1 ml-64 min-h-screen">
+        <div class="p-6">        @yield('content')
     </main>
 </div>
 

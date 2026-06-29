@@ -75,13 +75,13 @@ class KasirController extends Controller
         ]);
 
 foreach ($request->items as $item) {
-    // ✅ AMAN - Gunakan null coalescing operator
+    // AMAN - Gunakan null coalescing operator
     $id_menu = $item['id_menu'] ?? null;
     $qty = $item['qty'] ?? 1;
     $harga = $item['harga'] ?? 0;
     $topping_ids = $item['topping_ids'] ?? [];
     
-    // ✅ Skip jika tidak ada id_menu
+    // Skip jika tidak ada id_menu
     if (!$id_menu) {
         continue;
     }

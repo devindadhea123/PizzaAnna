@@ -18,28 +18,24 @@ class RiwayatPesananController extends Controller
         $this->middleware('role:admin');
     }
 
-    public function index()
-    {
-        $pesanan = Pesanan::with('kasir', 'detailPesanan.menu')
-            ->orderBy('tanggal', 'asc')
-            ->paginate(15);
+public function index()
+{
+    // Ambil data pesanan
+    $pesanan = Pesanan::with('kasir', 'detailPesanan.menu')
+        ->orderBy('tanggal', 'asc')
+        ->paginate(15);
 
-        // Ambil bulan & tahun yang ada di data pesanan
-        $periode = Pesanan::selectRaw('MONTH(tanggal) as bulan, YEAR(tanggal) as tahun')
-            ->distinct()
-            ->orderBy('tahun', 'desc')
-            ->orderBy('bulan', 'asc')
-            ->get();
+    // Ambil bulan & tahun yang tersedia dari database
+    $periode = Pesanan::selectRaw('DISTINCT MONTH(tanggal) as bulan, YEAR(tanggal) as tahun')
+        ->orderBy('tahun', 'asc')
+        ->orderBy('bulan', 'asc')
+        ->get();
 
-        $bulanTersedia = $periode->pluck('bulan')->unique();
-        $tahunTersedia = $periode->pluck('tahun')->unique();
+    $bulanTersedia = $periode->pluck('bulan')->unique()->values();
+    $tahunTersedia = $periode->pluck('tahun')->unique()->values();
 
-        return view('admin.riwayat-pesanan', compact(
-            'pesanan',
-            'bulanTersedia',
-            'tahunTersedia'
-        ));
-    }
+    return view('admin.riwayat-pesanan', compact('pesanan', 'bulanTersedia', 'tahunTersedia'));
+}
 
     public function getOrders(Request $request)
     {

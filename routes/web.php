@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\MenuApiController;
 use App\Http\Controllers\Admin\ToppingController;
 use App\Http\Controllers\Admin\KelolaAkunController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\Admin\SettingController;
+
 
 // ==================== GUEST ROUTES ====================
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
@@ -117,6 +119,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('api/admin')->group(function (
 Route::middleware(['auth', 'role:kasir'])->prefix('api/kasir')->group(function () {
     Route::get('/orders', [KasirController::class, 'getOrders']);
     Route::get('/orders/{id}', [KasirController::class, 'getOrderDetail']);
+});
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/pengaturan-jadwal', [SettingController::class, 'index'])->name('admin.pengaturan-jadwal');
+    Route::post('/admin/pengaturan-jadwal', [SettingController::class, 'update'])->name('admin.pengaturan-jadwal.update');
 });
 
 Route::get('/export/detail-excel', [LaporanController::class, 'exportDetailExcel'])->name('export.detail-excel')->middleware('auth');

@@ -10,54 +10,29 @@
         <p class="text-gray-500 mt-1">Riwayat prediksi menu terlaris menggunakan metode Weighted Moving Average (WMA)</p>
     </div>
     
-    <!-- Filter Section -->
-    <div class="bg-white rounded-2xl shadow-sm p-5 mb-6">
-        <div class="flex flex-wrap items-end gap-4">
-            <div class="flex-1 min-w-[150px]">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Filter Bulan</label>
-                <select id="filterMonth" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
-                    <option value="all">Semua Bulan</option>
-                    <option value="1">Januari</option>
-                    <option value="2">Februari</option>
-                    <option value="3">Maret</option>
-                    <option value="4">April</option>
-                    <option value="5">Mei</option>
-                    <option value="6">Juni</option>
-                    <option value="7">Juli</option>
-                    <option value="8">Agustus</option>
-                    <option value="9">September</option>
-                    <option value="10">Oktober</option>
-                    <option value="11">November</option>
-                    <option value="12">Desember</option>
-                </select>
-            </div>
-            <div class="flex-1 min-w-[150px]">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Filter Tahun</label>
-                <select id="filterYear" class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
-                    <option value="all">Semua Tahun</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                </select>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="filterPredictions()" class="bg-[#D73535] text-white px-6 py-2.5 rounded-xl hover:bg-red-700 transition flex items-center gap-2">
-                    <i class="bi bi-search"></i> Filter
-                </button>
-                <button onclick="resetFilter()" class="bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl hover:bg-gray-300 transition">
-                    Reset
-                </button>
-            </div>
-            <div class="flex gap-2 ml-auto">
-                <button onclick="exportToExcel()" class="bg-green-600 text-white px-5 py-2.5 rounded-xl hover:bg-green-700 transition flex items-center gap-2">
-                    <i class="bi bi-file-earmark-excel"></i> Excel
-                </button>
-                <button onclick="exportToPDF()" class="bg-red-600 text-white px-5 py-2.5 rounded-xl hover:bg-red-700 transition flex items-center gap-2">
-                    <i class="bi bi-file-earmark-pdf"></i> PDF
-                </button>
-            </div>
+    <!-- Export Buttons with Card Design -->
+<div class="bg-white rounded-2xl shadow-sm p-4 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Export Laporan</h3>
+            <p class="text-sm text-gray-500 mt-0.5">Download data prediksi dalam format Excel atau PDF</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="exportToExcel()" 
+                class="group relative bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                <i class="bi bi-file-earmark-excel text-lg"></i>
+                <span class="font-medium">Export Excel</span>
+                <div class="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
+            <button onclick="exportToPDF()" 
+                class="group relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                <i class="bi bi-file-earmark-pdf text-lg"></i>
+                <span class="font-medium">Export PDF</span>
+                <div class="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </button>
         </div>
     </div>
-    
+</div>
     <!-- Predictions Grid -->
     <div id="predictionsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="col-span-full text-center py-12">
@@ -128,7 +103,7 @@
     }
     
     function getMonthName(month) {
-        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agostus', 'September', 'Oktober', 'November', 'Desember'];
         return months[month - 1];
     }
     
@@ -147,10 +122,7 @@
     }
     
     function loadPredictions() {
-        const month = document.getElementById('filterMonth').value;
-        const year = document.getElementById('filterYear').value;
-        
-        fetch(`/api/admin/predictions?page=${currentPage}&month=${month}&year=${year}`)
+        fetch(`/api/admin/predictions?page=${currentPage}`)
             .then(response => response.json())
             .then(data => {
                 totalPages = data.last_page;
@@ -325,11 +297,11 @@
                                 ${rekomendasiPromosi.map(promo => `
                                     <div class="bg-white rounded-lg p-3 shadow-sm">
                                         <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-xl">${promo.icon || ''}</span>
+                                            <span class="text-xl">${promo.icon || '🎁'}</span>
                                             <span class="font-medium text-sm">${promo.judul || 'Promo'}</span>
                                         </div>
                                         <p class="text-xs text-gray-600">${promo.deskripsi || ''}</p>
-                                        <p class="text-xs text-orange-600 mt-2"> Target: ${promo.menu || 'Menu'}</p>
+                                        <p class="text-xs text-orange-600 mt-2">🎯 Target: ${promo.menu || 'Menu'}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -481,34 +453,13 @@
     }
     
     function goToPage(page) { currentPage = page; loadPredictions(); }
-    function filterPredictions() { currentPage = 1; loadPredictions(); }
-    function resetFilter() {
-        document.getElementById('filterMonth').value = 'all';
-        document.getElementById('filterYear').value = 'all';
-        currentPage = 1;
-        loadPredictions();
-    }
     
     function exportToExcel() {
-        const month = document.getElementById('filterMonth').value;
-        const year = document.getElementById('filterYear').value;
-        let url = '/api/admin/predictions/export/excel';
-        let params = [];
-        if (month && month !== 'all') params.push(`month=${month}`);
-        if (year && year !== 'all') params.push(`year=${year}`);
-        if (params.length > 0) url += '?' + params.join('&');
-        window.location.href = url;
+        window.location.href = '/api/admin/predictions/export/excel';
     }
     
     function exportToPDF() {
-        const month = document.getElementById('filterMonth').value;
-        const year = document.getElementById('filterYear').value;
-        let url = '/api/admin/predictions/export/pdf';
-        let params = [];
-        if (month && month !== 'all') params.push(`month=${month}`);
-        if (year && year !== 'all') params.push(`year=${year}`);
-        if (params.length > 0) url += '?' + params.join('&');
-        window.location.href = url;
+        window.location.href = '/api/admin/predictions/export/pdf';
     }
     
     document.addEventListener('DOMContentLoaded', function() {

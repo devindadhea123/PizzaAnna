@@ -79,18 +79,6 @@
                             LOGIN
                         </button>
                     </form>
-                    
-                    <div class="mt-6 text-center text-sm text-gray-500">
-                        <p>Demo Accounts:</p>
-                        <div class="flex justify-center gap-4 mt-2">
-                            <div class="text-xs">
-                                <span class="font-semibold">Admin:</span> admin / admin
-                            </div>
-                            <div class="text-xs">
-                                <span class="font-semibold">Kasir:</span> kasir / kasir
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

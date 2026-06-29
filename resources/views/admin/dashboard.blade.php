@@ -6,11 +6,37 @@
 
 <div class="p-6">
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p class="text-gray-500">Welcome back, {{ Auth::user()->nama_lengkap ?? 'Admin' }}!</p>
-    </div>
-    
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+    <p class="text-gray-500">Welcome back, {{ Auth::user()->nama_lengkap ?? 'Admin' }}!</p>
+</div>
+
+<!-- NOTIFIKASI DASHBOARD -->
+<div id="dynamic-notifications" class="mb-6">
+    @php
+        $today = now();
+        $currentHour = (int)$today->format('H');
+        $isPredictionDay = ($today->day == 27);
+        $existingPrediksi = App\Models\RiwayatPrediksi::where(
+            'bulan_target',
+            now()->addMonth()->format('Y-m')
+        )->first();
+    @endphp
+
+    @if($isPredictionDay && $currentHour >= 12 && !$existingPrediksi)
+        <div class="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-2xl shadow-sm">
+            <div class="flex items-start gap-3">
+                <i class="bi bi-hourglass-split text-2xl text-blue-600"></i>
+                <div>
+                    <p class="font-semibold">Sistem Sedang Memproses Prediksi</p>
+                    <p class="text-sm mt-1">
+                        Waktu prediksi manual telah berakhir. Sistem akan menjalankan prediksi otomatis.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
     <!-- FILTER BULAN & TAHUN -->
     <div class="bg-white rounded-2xl shadow-sm p-4 mb-6">
         <div class="flex items-center gap-4 flex-wrap">
@@ -113,66 +139,10 @@
     
     <!-- Prediksi Section -->
     <div class="bg-gradient-to-r from-[#D73535] to-red-700 rounded-2xl shadow-sm p-6 mb-8 text-white">
-        
-        <!-- ✅ NOTIFIKASI PREDIKSI -->
-        @php
-            $today = now();
-            $currentHour = (int)$today->format('H');
-            $isPredictionDay = ($today->day == 27);
-            $bulanTarget = now()->addMonth()->format('F Y');
-            $existingPrediksi = App\Models\RiwayatPrediksi::where('bulan_target', now()->addMonth()->format('Y-m'))->first();
-        @endphp
-
-        @if($isPredictionDay && !$existingPrediksi && $currentHour < 12)
-            <!-- Notifikasi WARNING (sebelum jam 12) -->
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-lg shadow-md">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <i class="bi bi-bell-fill text-2xl text-yellow-600"></i>
-                    </div>
-                    <div class="ml-3 flex-1">
-                        <p class="font-bold text-lg">Hari ini tanggal 27! Waktunya Prediksi!</p>
-                        <p class="text-sm mt-1">Lakukan prediksi menu terlaris untuk <span class="font-semibold">{{ $bulanTarget }}</span>.</p>
-                        <p class="text-xs mt-1 text-yellow-600">
-                            <i class="bi bi-clock"></i> Anda masih punya waktu hingga <span class="font-bold">jam 12:00 siang</span>.
-                            <span class="font-semibold">Belum ada prediksi untuk bulan depan.</span>
-                        </p>
-                        <div class="mt-2 flex gap-2">
-                            <div class="bg-yellow-100 rounded-full px-3 py-1 text-xs">
-                                <i class="bi bi-hand-index-thumb"></i> Klik tombol "Lakukan Prediksi" sekarang
-                            </div>
-                            <div class="bg-gray-100 rounded-full px-3 py-1 text-xs">
-                                <i class="bi bi-clock-history"></i> Atau tunggu sistem otomatis jam 12:00
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.style.display='none'" class="text-yellow-500 hover:text-yellow-700">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            </div>
-       
-        @elseif($isPredictionDay && $currentHour >= 12 && !$existingPrediksi)
-            <!-- Notifikasi INFO (sudah lewat jam 12, prediksi akan otomatis) -->
-            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-lg shadow-md">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <i class="bi bi-hourglass-split text-2xl text-blue-600 animate-spin"></i>
-                    </div>
-                    <div class="ml-3 flex-1">
-                        <p class="font-bold text-lg">Sistem Sedang Memproses Prediksi</p>
-                        <p class="text-sm mt-1">Waktu prediksi manual telah berakhir. Sistem akan menjalankan prediksi otomatis.</p>
-                        <p class="text-xs mt-1 text-blue-600">Mohon tunggu, halaman akan refresh setelah prediksi selesai.</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-        
         <div class="flex justify-between items-center flex-wrap gap-4">
             <div>
-                <h2 class="text-xl font-bold">Prediksi Menu Terlaris</h2>
-                <p class="text-white/80 text-sm mt-1">Berdasarkan data penjualan 6 bulan terakhir</p>
-                <p class="text-white/60 text-xs mt-2" id="periodeData">Periode: -</p>
+            <h2 class="text-xl font-bold">Prediksi Menu Terlaris</h2>               
+             <p class="text-white/60 text-xs mt-2" id="periodeData">Periode: -</p>
             </div>
             <button onclick="lakukanPrediksi()" id="prediksiBtn" class="bg-yellow-400 text-gray-900 px-6 py-2 rounded-full font-semibold hover:bg-yellow-500 transition flex items-center gap-2">
                 <i class="bi bi-magic"></i> Lakukan Prediksi
@@ -215,17 +185,9 @@
             .then(data => {
                 console.log('Updating notifications:', data);
                 
-                let notificationContainer = document.getElementById('dynamic-notifications');
-                
-                if (!notificationContainer) {
-                    const prediksiSection = document.querySelector('.bg-gradient-to-r');
-                    if (prediksiSection) {
-                        const newNotifDiv = document.createElement('div');
-                        newNotifDiv.id = 'dynamic-notifications';
-                        prediksiSection.insertBefore(newNotifDiv, prediksiSection.firstChild);
-                        notificationContainer = newNotifDiv;
-                    }
-                }
+               let notificationContainer = document.getElementById('dynamic-notifications');
+
+                if (!notificationContainer) return;
                 
                 if (notificationContainer) {
                     let notifHtml = '';
@@ -249,33 +211,34 @@
                         `;
                     } 
                     // Kasus 2: Hari prediksi dan belum lewat deadline
-                    else if (data.is_prediction_day && data.is_before_deadline && !data.has_prediction) {
-                        notifHtml = `
-                            <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-lg shadow-md">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0">
-                                        <i class="bi bi-bell-fill text-2xl text-yellow-600"></i>
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="font-bold text-lg">Hari ini tanggal 27! Waktunya Prediksi!</p>
-                                        <p class="text-sm mt-1">Lakukan prediksi menu terlaris untuk <span class="font-semibold">${data.bulan_target || 'bulan depan'}</span>.</p>
-                                        <p class="text-xs mt-1 text-yellow-600">
-                                            <i class="bi bi-clock"></i> Anda masih punya waktu hingga <span class="font-bold">jam 12:00 siang</span>.
-                                            <span class="font-semibold">Belum ada prediksi untuk bulan depan.</span>
-                                        </p>
-                                        <div class="mt-2 flex gap-2">
-                                            <div class="bg-yellow-100 rounded-full px-3 py-1 text-xs">
-                                                <i class="bi bi-hand-index-thumb"></i> Klik tombol "Lakukan Prediksi" sekarang
-                                            </div>
-                                            <div class="bg-gray-100 rounded-full px-3 py-1 text-xs">
-                                                <i class="bi bi-clock-history"></i> Atau tunggu sistem otomatis jam 12:00
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
+// Kasus 2: Hari prediksi dan belum lewat deadline
+else if (data.is_prediction_day && data.is_before_deadline && !data.has_prediction) {
+    notifHtml = `
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-lg shadow-md">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-bell-fill text-2xl text-yellow-600"></i>
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="font-bold text-lg"> Hari ini tanggal ${data.prediction_date}! Waktunya Prediksi!</p>
+                    <p class="text-sm mt-1">Lakukan prediksi menu terlaris untuk <span class="font-semibold">${data.formatted_bulan || data.bulan_target || 'bulan depan'}</span>.</p>
+                    <p class="text-xs mt-1 text-yellow-600">
+                        <i class="bi bi-clock"></i> Anda masih punya waktu hingga <span class="font-bold">${data.deadline_time}</span>.
+                        <span class="font-semibold">Belum ada prediksi untuk bulan depan.</span>
+                    </p>
+                    <div class="mt-2 flex gap-2">
+                        <div class="bg-yellow-100 rounded-full px-3 py-1 text-xs">
+                            <i class="bi bi-hand-index-thumb"></i> Klik tombol "Lakukan Prediksi" sekarang
+                        </div>
+                        <div class="bg-gray-100 rounded-full px-3 py-1 text-xs">
+                            <i class="bi bi-clock-history"></i> Atau tunggu sistem otomatis jam ${data.deadline_time}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
                     // Kasus 3: Sudah lewat deadline tapi belum ada prediksi
                     else if (data.is_prediction_day && !data.is_before_deadline && !data.has_prediction) {
                         notifHtml = `
@@ -354,23 +317,22 @@
     }
     
     function applyFilter() {
-        currentMonth = document.getElementById('filterMonth').value;
-        currentYear = document.getElementById('filterYear').value;
-        
-        if (!currentMonth || !currentYear) {
-            document.getElementById('filterInfo').innerHTML = 'Silakan pilih bulan dan tahun terlebih dahulu';
-            return;
-        }
-        
-        const monthName = document.getElementById('filterMonth').options[document.getElementById('filterMonth').selectedIndex].text;
-        document.getElementById('bulanTarget').innerHTML = `Pendapatan ${monthName} ${currentYear}`;
-        document.getElementById('filterInfo').innerHTML = `Menampilkan data: ${monthName} ${currentYear}`;
-        
-        loadDashboardData();
-        loadOmzetChart(document.getElementById('omzetFilter').value);
-        loadPaymentChart();
-        loadTopMenu();
+    currentMonth = document.getElementById('filterMonth').value;
+    currentYear = document.getElementById('filterYear').value;
+    
+    if (!currentMonth || !currentYear) {
+        document.getElementById('filterInfo').innerHTML = 'Silakan pilih bulan dan tahun terlebih dahulu';
+        return;
     }
+    
+    const monthName = document.getElementById('filterMonth').options[document.getElementById('filterMonth').selectedIndex].text;
+    document.getElementById('bulanTarget').innerHTML = `Pendapatan ${monthName} ${currentYear}`;
+    document.getElementById('filterInfo').innerHTML = `Menampilkan data: ${monthName} ${currentYear}`;
+    
+    loadDashboardData();
+    loadOmzetChart(document.getElementById('omzetFilter').value);
+    loadPaymentChart(); 
+}
     
     function loadDashboardData() {
         if (!currentMonth || !currentYear) return;
@@ -451,30 +413,72 @@
             .catch(error => console.error('Error:', error));
     }
     
-    function loadPaymentChart() {
-        if (!currentMonth || !currentYear) return;
-        
-        fetch(`/api/admin/payment-chart?month=${currentMonth}&year=${currentYear}`)
-            .then(response => response.json())
-            .then(data => {
-                const ctx = document.getElementById('paymentChart').getContext('2d');
-                if (window.paymentChartInstance) window.paymentChartInstance.destroy();
+
+function loadPaymentChart() {
+    if (!currentMonth || !currentYear) return;
+    
+    console.log('Loading payment chart for:', currentMonth, currentYear);
+    
+    fetch(`/api/admin/payment-chart?month=${currentMonth}&year=${currentYear}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Payment chart data:', data);
+            
+            const tunaiValue = parseFloat(data.tunai) || 0;
+            const qrisValue = parseFloat(data.qris) || 0;
+            const total = tunaiValue + qrisValue;
+            
+            // ✅ UPDATE PERSENTASE DI BAWAH CHART
+            if (total > 0) {
+                const tunaiPersen = ((tunaiValue / total) * 100).toFixed(1);
+                const qrisPersen = ((qrisValue / total) * 100).toFixed(1);
                 
-                window.paymentChartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Tunai', 'QRIS'],
-                        datasets: [{ data: [data.tunai, data.qris], backgroundColor: ['#D73535', '#F59E0B'], borderWidth: 0 }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: { legend: { position: 'bottom' } }
+                document.getElementById('tunaiPersen').innerHTML = tunaiPersen + '%';
+                document.getElementById('qrisPersen').innerHTML = qrisPersen + '%';
+                
+                // ✅ UPDATE TOOLTIP (hover)
+                document.getElementById('tunaiPersen').title = 'Rp ' + formatRupiah(tunaiValue);
+                document.getElementById('qrisPersen').title = 'Rp ' + formatRupiah(qrisValue);
+            } else {
+                document.getElementById('tunaiPersen').innerHTML = '0%';
+                document.getElementById('qrisPersen').innerHTML = '0%';
+            }
+            
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            if (window.paymentChartInstance) window.paymentChartInstance.destroy();
+            
+            window.paymentChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Tunai', 'QRIS'],
+                    datasets: [{ 
+                        data: [tunaiValue, qrisValue], 
+                        backgroundColor: ['#D73535', '#F59E0B'], 
+                        borderWidth: 0 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { 
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: Rp ${formatRupiah(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
                     }
-                });
-            })
-            .catch(error => console.error('Error:', error));
-    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loadPaymentChart:', error));
+}
     // ==================== PREDIKSI ====================
     
     // PREDIKSI MANUAL

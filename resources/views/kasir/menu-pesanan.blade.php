@@ -250,10 +250,7 @@
         <div class="p-5" id="strukContent"></div>  <!-- PASTIKAN ID INI ADA -->
         <div class="border-t p-4 flex gap-3">
             <button onclick="cetakPDF()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-1">
-                <i class="bi bi-file-pdf"></i> Struk Customer
-            </button>
-             <button onclick="cetakPDF()" class="flex-1 bg-green-600 text-white py-2 rounded-xl hover:bg-green-700 transition font-semibold flex items-center justify-center gap-1">
-                <i class="bi bi-shop"></i> Cetak Dapur
+                <i class="bi bi-file-pdf"></i> Struk
             </button>
             <button onclick="closeStrukAndReset()" class="flex-1 bg-[#D73535] text-white py-2 rounded-xl hover:bg-red-700 transition font-semibold flex items-center justify-center gap-1">
                 <i class="bi bi-check-lg"></i> OK

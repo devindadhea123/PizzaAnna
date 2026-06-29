@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-800">
-            <i class="bi bi-people-fill text-[#D73535]"></i> Kelola Akun
+            <i class=" text-[#D73535]"></i> Kelola Akun
         </h1>
         <p class="text-gray-500 mt-1">Kelola akun Admin dan Kasir yang memiliki akses ke sistem</p>
     </div>
