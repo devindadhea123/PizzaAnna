@@ -627,7 +627,7 @@ function loadPaymentChart() {
     
     function displayPredictionResult(data) {
         document.getElementById('periodeData').innerHTML = `Periode: ${data.periode}`;
-        document.getElementById('bulanTarget').innerHTML = `Prediksi untuk: ${data.bulan_target}`;
+        document.getElementById('bulanTarget').innerHTML = `Pendapatan Bulan Ini: ${data.bulan_target}`;
         
         let prediksiHtml = '';
         if (data.data && data.data.length > 0) {
