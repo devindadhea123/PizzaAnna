@@ -170,7 +170,7 @@
 <!-- MODAL NONAKTIFKAN -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal(event)">
     <div class="bg-white rounded-2xl w-full max-w-sm mx-4 shadow-2xl" onclick="event.stopPropagation()">
-        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-5 rounded-t-2xl flex justify-between items-center">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-5 rounded-t-2xl flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="bi bi-exclamation-triangle text-2xl"></i>
                 <h2 class="text-xl font-bold">Nonaktifkan Menu</h2>
@@ -181,11 +181,11 @@
         </div>
         <div class="p-6">
             <p class="text-gray-700 mb-2">Apakah Anda yakin ingin menonaktifkan menu <strong id="deleteMenuName"></strong>?</p>
-            <div id="menuUsageInfo" class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 text-sm text-yellow-700 hidden">
+            <div id="menuUsageInfo" class="bg-yellow-50 border-l-4 border-red-400 p-3 mb-4 text-sm text-black-700 hidden">
                 <i class="bi bi-info-circle"></i> <span id="menuUsageText"></span>
             </div>
             <div class="flex gap-3">
-                <button onclick="confirmDelete()" class="flex-1 bg-orange-500 text-white py-2 rounded-xl hover:bg-orange-600 transition">Ya, Nonaktifkan</button>
+                <button onclick="confirmDelete()" class="flex-1 bg-red-500 text-white py-2 rounded-xl hover:bg-red-600 transition">Ya, Nonaktifkan</button>
                 <button onclick="closeDeleteModal()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-xl hover:bg-gray-300 transition">Batal</button>
             </div>
         </div>

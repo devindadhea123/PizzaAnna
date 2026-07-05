@@ -202,20 +202,18 @@ class ManajemenMenuController extends Controller
         try {
             $menu = Menu::findOrFail($id);
             
-            // ✅ CEK apakah menu sudah dipesan
             $sudahDipesan = DetailPesanan::where('id_menu', $id)->exists();
             
             if ($sudahDipesan) {
-                // ✅ SOFT DELETE - Nonaktifkan (menu tetap ada di database)
-                $menu->delete(); // Soft delete (butuh SoftDeletes di Model)
+                
+                $menu->delete(); 
                 
                 return response()->json([
                     'success' => true,
-                    'message' => '✅ Menu berhasil dinonaktifkan! Data historis tetap tersimpan.'
+                    'message' => 'Menu berhasil dinonaktifkan! Data historis tetap tersimpan.'
                 ]);
             } else {
-                // ✅ HARD DELETE - Hapus permanen (belum pernah dipesan)
-                // Hapus ukuran pizza
+               
                 PizzaUkuran::where('id_menu', $menu->id_menu)->delete();
                 
                 // Hapus gambar
@@ -228,7 +226,7 @@ class ManajemenMenuController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => '✅ Menu berhasil dihapus permanen!'
+                    'message' => 'Menu berhasil dihapus permanen!'
                 ]);
             }
             
