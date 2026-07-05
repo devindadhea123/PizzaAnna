@@ -153,198 +153,178 @@
         document.getElementById('addModal').classList.add('hidden');
         document.getElementById('addModal').classList.remove('flex');
     }
-
     document.getElementById('addForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        let formData = new FormData();
-        formData.append('nama_topping', document.getElementById('addNama').value);
-        formData.append('ukuran', document.getElementById('addUkuran').value);
-        formData.append('harga', document.getElementById('addHarga').value);
-        formData.append('_token', '{{ csrf_token() }}');
-        
-        Swal.fire({
-            title: 'Menyimpan...',
-            text: 'Mohon tunggu sebentar',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-        
-        fetch('{{ route("admin.topping.store") }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: data.message,
-                    confirmButtonColor: '#D73535',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: data.message,
-                    confirmButtonColor: '#D73535',
-                    confirmButtonText: 'OK'
-                });
-            }
-        })
-        .catch(error => {
+    e.preventDefault();
+    
+    let formData = new FormData();
+    formData.append('nama_topping', document.getElementById('addNama').value);
+    formData.append('ukuran', document.getElementById('addUkuran').value);
+    formData.append('harga', document.getElementById('addHarga').value);
+    formData.append('_token', '{{ csrf_token() }}');
+    
+    Swal.fire({
+        title: 'Menyimpan...',
+        text: 'Mohon tunggu sebentar',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    fetch('{{ route("admin.topping.store") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                confirmButtonColor: '#D73535',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload(); // Refresh untuk menampilkan data baru
+            });
+        } else {
             Swal.fire({
                 icon: 'error',
-                title: 'Error!',
-                text: 'Terjadi kesalahan saat menyimpan',
+                title: 'Gagal!',
+                text: data.message,
                 confirmButtonColor: '#D73535',
                 confirmButtonText: 'OK'
             });
-        });
-    });
-
-    // ==================== EDIT TOPPING ====================
-    function openEditModal(id) {
-        let row = document.getElementById(`row-${id}`);
-        let cells = row.getElementsByTagName('td');
-        
-        let nama = cells[1].innerText;
-        let ukuran = cells[2].innerText.trim();
-        let harga = cells[3].innerText.replace('Rp ', '').replace(/\./g, '');
-        
-        document.getElementById('editId').value = id;
-        document.getElementById('editNama').value = nama;
-        document.getElementById('editUkuran').value = ukuran;
-        document.getElementById('editHarga').value = harga;
-        
-        document.getElementById('editModal').classList.remove('hidden');
-        document.getElementById('editModal').classList.add('flex');
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').classList.add('hidden');
-        document.getElementById('editModal').classList.remove('flex');
-    }
-
-    document.getElementById('editForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        let id = document.getElementById('editId').value;
-        let formData = new FormData();
-        formData.append('nama_topping', document.getElementById('editNama').value);
-        formData.append('ukuran', document.getElementById('editUkuran').value);
-        formData.append('harga', document.getElementById('editHarga').value);
-        formData.append('_token', '{{ csrf_token() }}');
-        formData.append('_method', 'PUT');
-        
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
         Swal.fire({
-            title: 'Menyimpan...',
-            text: 'Mohon tunggu sebentar',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-        
-        fetch(`/admin/topping/update/${id}`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: data.message,
-                    confirmButtonColor: '#D73535',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: data.message,
-                    confirmButtonColor: '#D73535',
-                    confirmButtonText: 'OK'
-                });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: 'Terjadi kesalahan saat update',
-                confirmButtonColor: '#D73535',
-                confirmButtonText: 'OK'
-            });
-        });
-    });
-
-    // ==================== HAPUS TOPPING ====================
-    function confirmDelete(id, name) {
-        Swal.fire({
-            title: 'Hapus Topping?',
-            text: `Apakah Anda yakin ingin menghapus topping "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
+            icon: 'error',
+            title: 'Error!',
+            text: 'Terjadi kesalahan saat menyimpan',
             confirmButtonColor: '#D73535',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: 'Menghapus...',
-                    text: 'Mohon tunggu sebentar',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading(); }
-                });
-                
-                fetch(`/admin/topping/delete/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: data.message,
-                            confirmButtonColor: '#D73535',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal!',
-                            text: data.message,
-                            confirmButtonColor: '#D73535',
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                })
-                .catch(error => {
+            confirmButtonText: 'OK'
+        });
+    });
+});
+
+
+// ==================== EDIT TOPPING ====================
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    let id = document.getElementById('editId').value;
+    let formData = new FormData();
+    formData.append('nama_topping', document.getElementById('editNama').value);
+    formData.append('ukuran', document.getElementById('editUkuran').value);
+    formData.append('harga', document.getElementById('editHarga').value);
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('_method', 'PUT');
+    
+    Swal.fire({
+        title: 'Menyimpan...',
+        text: 'Mohon tunggu sebentar',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    fetch(`/admin/topping/update/${id}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                confirmButtonColor: '#D73535',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: data.message,
+                confirmButtonColor: '#D73535',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Terjadi kesalahan saat update',
+            confirmButtonColor: '#D73535',
+            confirmButtonText: 'OK'
+        });
+    });
+});
+  // ==================== HAPUS TOPPING ====================
+function confirmDelete(id, name) {
+    Swal.fire({
+        title: 'Hapus Topping?',
+        text: `Apakah Anda yakin ingin menghapus topping "${name}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#D73535',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Menghapus...',
+                text: 'Mohon tunggu sebentar',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            fetch(`/admin/topping/delete/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message,
+                        confirmButtonColor: '#D73535',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error!',
-                        text: 'Terjadi kesalahan saat menghapus',
+                        title: 'Gagal!',
+                        text: data.message,
                         confirmButtonColor: '#D73535',
                         confirmButtonText: 'OK'
                     });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Terjadi kesalahan saat menghapus',
+                    confirmButtonColor: '#D73535',
+                    confirmButtonText: 'OK'
                 });
-            }
-        });
-    }
+            });
+        }
+    });
+}
 </script>
 @endsection

@@ -167,22 +167,25 @@
     </div>
 </div>
 
-<!-- MODAL HAPUS -->
+<!-- MODAL NONAKTIFKAN -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal(event)">
     <div class="bg-white rounded-2xl w-full max-w-sm mx-4 shadow-2xl" onclick="event.stopPropagation()">
-        <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-5 rounded-t-2xl flex justify-between items-center">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-5 rounded-t-2xl flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="bi bi-trash text-2xl"></i>
-                <h2 class="text-xl font-bold">Hapus Menu</h2>
+                <i class="bi bi-exclamation-triangle text-2xl"></i>
+                <h2 class="text-xl font-bold">Nonaktifkan Menu</h2>
             </div>
             <button onclick="closeDeleteModal()" class="hover:bg-white/20 rounded-full p-2 transition">
                 <i class="bi bi-x-lg text-xl"></i>
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-700 mb-4">Apakah Anda yakin ingin menghapus menu <strong id="deleteMenuName"></strong>?</p>
+            <p class="text-gray-700 mb-2">Apakah Anda yakin ingin menonaktifkan menu <strong id="deleteMenuName"></strong>?</p>
+            <div id="menuUsageInfo" class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 text-sm text-yellow-700 hidden">
+                <i class="bi bi-info-circle"></i> <span id="menuUsageText"></span>
+            </div>
             <div class="flex gap-3">
-                <button onclick="confirmDelete()" class="flex-1 bg-red-600 text-white py-2 rounded-xl hover:bg-red-700 transition">Ya, Hapus</button>
+                <button onclick="confirmDelete()" class="flex-1 bg-orange-500 text-white py-2 rounded-xl hover:bg-orange-600 transition">Ya, Nonaktifkan</button>
                 <button onclick="closeDeleteModal()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-xl hover:bg-gray-300 transition">Batal</button>
             </div>
         </div>
@@ -251,11 +254,10 @@
                     <td class="px-4 py-3 text-sm text-gray-600">${ukuranHargaText}</td>
                     <td class="px-4 py-3 text-sm text-center">${diskonText}</td>
                     <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">${menu.deskripsi || '-'}</td>
-                    <td class="px-4 py-3 text-center">
-                        <button onclick="editMenu(${menu.id_menu})" class="text-blue-600 hover:text-blue-800 mr-2"><i class="bi bi-pencil-square text-xl"></i></button>
-                        <button onclick="showDeleteModal(${menu.id_menu}, '${menu.nama_menu}')" class="text-red-600 hover:text-red-800"><i class="bi bi-trash text-xl"></i></button>
-                    </td>
-                </tr>
+                    <td class="px-4 py-3 text-center flex ">
+                    <button onclick="editMenu(${menu.id_menu})" class="text-blue-600 hover:text-blue-800 mr-2"><i class="bi bi-pencil-square text-xl"></i></button>
+                    <button onclick="nonaktifkanMenu(${menu.id_menu}, '${menu.nama_menu}')" class="text-red-600 hover:text-red-800"><i class="bi bi-trash text-xl"></i></button>                    </td>
+                    </tr>
             `;
         });
         tbody.innerHTML = html;
@@ -475,62 +477,101 @@
         });
     });
 
-    // ==================== HAPUS MENU DENGAN SWEETALERT ====================
-    function showDeleteModal(id, name) {
-        deleteId = id;
-        document.getElementById('deleteMenuName').innerText = name;
-        document.getElementById('deleteModal').classList.remove('hidden');
-        document.getElementById('deleteModal').classList.add('flex');
-    }
-
-    function closeDeleteModal(event) {
-        if (event && event.target !== document.getElementById('deleteModal')) return;
-        document.getElementById('deleteModal').classList.add('hidden');
-        document.getElementById('deleteModal').classList.remove('flex');
-        deleteId = null;
-    }
-
-    function confirmDelete() {
-        if (!deleteId) return;
-        
-        Swal.fire({
-            title: 'Menghapus...',
-            text: 'Mohon tunggu sebentar',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-        
-        fetch(`/api/admin/menu/${deleteId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-        })
+// ==================== DEKLARASI VARIABEL ====================
+let deleteMenuName = '';
+function nonaktifkanMenu(id, name) {
+    deleteId = id;
+    deleteMenuName = name;
+    
+    // Cek apakah menu sudah pernah dipesan
+    fetch(`/api/admin/menu/cek-dipesan/${id}`)
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: data.message,
-                    confirmButtonColor: '#D73535',
-                    confirmButtonText: 'OK'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        closeDeleteModal();
-                        loadMenu();
-                    }
-                });
+            document.getElementById('deleteMenuName').innerText = name;
+            const usageInfo = document.getElementById('menuUsageInfo');
+            const usageText = document.getElementById('menuUsageText');
+            
+            if (data.sudah_dipesan > 0) {
+                usageInfo.classList.remove('hidden');
+                usageText.innerHTML = `
+                    <i class="bi bi-receipt"></i> Menu ini sudah dipesan <strong>${data.sudah_dipesan}</strong> kali.
+                    <br>Data historis penjualan akan tetap tersimpan di database.
+                    <br>Menu tidak akan muncul di daftar menu kasir.
+                `;
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: 'Error: ' + data.message,
-                    confirmButtonColor: '#D73535',
-                    confirmButtonText: 'OK'
-                });
+                usageInfo.classList.add('hidden');
             }
+            
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        })
+        .catch(() => {
+            // Fallback jika API error
+            document.getElementById('deleteMenuName').innerText = name;
+            document.getElementById('menuUsageInfo').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
         });
-    }
+}
 
+function closeDeleteModal(event) {
+    if (event && event.target !== document.getElementById('deleteModal')) return;
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('flex');
+    deleteId = null;
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    
+    Swal.fire({
+        title: 'Memproses...',
+        text: 'Mohon tunggu sebentar',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    fetch(`/api/admin/menu/${deleteId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                confirmButtonColor: '#D73535',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                closeDeleteModal();
+                loadMenu();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: data.message || 'Terjadi kesalahan',
+                confirmButtonColor: '#D73535',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Terjadi kesalahan pada server',
+            confirmButtonColor: '#D73535',
+            confirmButtonText: 'OK'
+        });
+    });
+}
     // ==================== EVENT LISTENERS ====================
     document.getElementById('diskonJenis').addEventListener('change', toggleDiskonForm);
     

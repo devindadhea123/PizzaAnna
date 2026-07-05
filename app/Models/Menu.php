@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; 
 use App\Models\Kategori;
 use App\Models\PizzaUkuran;
 
 class Menu extends Model
 {
-    use HasFactory;
-
+    use HasFactory, SoftDeletes; 
     protected $table = 'menu';
 
     protected $primaryKey = 'id_menu';
@@ -28,6 +28,8 @@ class Menu extends Model
         'deskripsi',
     ];
 
+    protected $dates = ['deleted_at'];
+
     public function kategori()
     {
         return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
@@ -37,6 +39,4 @@ class Menu extends Model
     {
         return $this->hasMany(PizzaUkuran::class, 'id_menu', 'id_menu');
     }
-
-    
 }

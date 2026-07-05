@@ -26,6 +26,7 @@ Route::get('/', [HomeController::class, 'index']);
 
 // ==================== PUBLIC API ROUTES ====================
 Route::get('/api/menu', [MenuApiController::class, 'menu']);
+Route::get('/api/admin/menu/cek-dipesan/{id}', [ManajemenMenuController::class, 'cekDipesan']);
 Route::get('/api/menu/category/{id}', [MenuApiController::class, 'menuByKategori']); 
 Route::get('/api/kategori', [MenuApiController::class, 'kategori']);
 
