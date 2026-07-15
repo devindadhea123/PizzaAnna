@@ -47,7 +47,7 @@
     <!-- Tabel Menu -->
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[800px]">
+            <table class="w-full min-w-[900px]">
                 <thead class="bg-gray-50 border-b">
                     <tr>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">No</th>
@@ -57,11 +57,12 @@
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ukuran & Harga</th>
                         <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Diskon</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Deskripsi</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Stok</th>
                         <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="menuTable">
-                    <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading...</td></tr>
+                    <tr><td colspan="9" class="text-center py-10 text-gray-400">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -104,7 +105,7 @@
                 </select>
             </div>
             
-            <!-- FORM UKURAN PIZZA (Muncul hanya jika kategori = Pizza) -->
+            <!-- FORM UKURAN PIZZA -->
             <div id="ukuranContainer" class="mb-4" style="display: none;">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Ukuran & Harga Pizza</label>
                 <div class="space-y-3">
@@ -124,13 +125,22 @@
                 <p class="text-xs text-gray-500 mt-2">Isi harga untuk masing-masing ukuran pizza (S, M, L)</p>
             </div>
             
-            <!-- Field Harga untuk Non-Pizza -->
+            <!-- Harga untuk Non-Pizza -->
             <div id="hargaContainer" class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp) <span class="text-red-500">*</span></label>
                 <input type="number" id="harga" name="harga" class="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
                 <p class="text-xs text-gray-500 mt-1">Isi harga untuk menu biasa (bukan pizza)</p>
             </div>
             
+            <!-- ✅ STOK MENU -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Stok Menu</label>
+                <input type="number" id="stokMenu" name="stok_menu" value="0" min="0" 
+                       class="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
+                <p class="text-xs text-gray-400 mt-1">Jumlah porsi yang tersedia untuk hari ini</p>
+            </div>
+            
+            <!-- Gambar -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Gambar Menu</label>
                 <input type="file" id="gambar" name="gambar" accept="image/*" class="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#D73535]">
@@ -170,7 +180,7 @@
 <!-- MODAL NONAKTIFKAN -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal(event)">
     <div class="bg-white rounded-2xl w-full max-w-sm mx-4 shadow-2xl" onclick="event.stopPropagation()">
-        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-5 rounded-t-2xl flex justify-between items-center">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-5 rounded-t-2xl flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="bi bi-exclamation-triangle text-2xl"></i>
                 <h2 class="text-xl font-bold">Nonaktifkan Menu</h2>
@@ -181,18 +191,18 @@
         </div>
         <div class="p-6">
             <p class="text-gray-700 mb-2">Apakah Anda yakin ingin menonaktifkan menu <strong id="deleteMenuName"></strong>?</p>
-            <div id="menuUsageInfo" class="bg-yellow-50 border-l-4 border-red-400 p-3 mb-4 text-sm text-black-700 hidden">
+            <div id="menuUsageInfo" class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 text-sm text-yellow-700 hidden">
                 <i class="bi bi-info-circle"></i> <span id="menuUsageText"></span>
             </div>
             <div class="flex gap-3">
-                <button onclick="confirmDelete()" class="flex-1 bg-red-500 text-white py-2 rounded-xl hover:bg-red-600 transition">Ya, Nonaktifkan</button>
+                <button onclick="confirmDelete()" class="flex-1 bg-[#D73535] text-white py-2 rounded-xl hover:bg-red-700 transition">Ya, Nonaktifkan</button>
                 <button onclick="closeDeleteModal()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-xl hover:bg-gray-300 transition">Batal</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tambahkan SweetAlert CDN -->
+<!-- SweetAlert CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -204,7 +214,7 @@
         return Math.round(angka).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
-    // ==================== LOAD MENU (ADMIN) ====================
+    // ==================== LOAD MENU ====================
     function loadMenu() {
         const kategori = document.getElementById('filterKategori').value;
         const search = document.getElementById('searchMenu').value;
@@ -225,7 +235,7 @@
     function renderTable(menus) {
         const tbody = document.getElementById('menuTable');
         if (!menus.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-400">Tidak ada data menu</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-gray-400">Tidak ada data menu</td></tr>';
             return;
         }
         
@@ -235,12 +245,21 @@
             const diskonText = (menu.diskon_jenis === 'persen' && menu.diskon_nilai > 0) ? `${menu.diskon_nilai}%` : '-';
             
             let ukuranHargaText = '';
-            
             if (menu.id_kategori == 1 && menu.pizza_ukuran && menu.pizza_ukuran.length > 0) {
                 const list = menu.pizza_ukuran.map(uk => `${uk.ukuran}=${formatRupiah(uk.harga)}`);
                 ukuranHargaText = list.join(', ');
             } else {
                 ukuranHargaText = `Rp ${formatRupiah(menu.harga)}`;
+            }
+            
+            // ✅ STATUS STOK
+            let stokStatus = '';
+            if (menu.stok_menu > 3) {
+                stokStatus = `<span class="text-gray-500">${menu.stok_menu}</span>`;
+            } else if (menu.stok_menu > 0 && menu.stok_menu <= 3) {
+                stokStatus = `<span class="text-orange-500 font-bold">${menu.stok_menu} ⚠️</span>`;
+            } else {
+                stokStatus = `<span class="text-red-500 font-bold">0 ❌</span>`;
             }
             
             html += `
@@ -254,10 +273,16 @@
                     <td class="px-4 py-3 text-sm text-gray-600">${ukuranHargaText}</td>
                     <td class="px-4 py-3 text-sm text-center">${diskonText}</td>
                     <td class="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">${menu.deskripsi || '-'}</td>
-                    <td class="px-4 py-3 text-center flex ">
-                    <button onclick="editMenu(${menu.id_menu})" class="text-blue-600 hover:text-blue-800 mr-2"><i class="bi bi-pencil-square text-xl"></i></button>
-                    <button onclick="nonaktifkanMenu(${menu.id_menu}, '${menu.nama_menu}')" class="text-red-600 hover:text-red-800"><i class="bi bi-trash text-xl"></i></button>                    </td>
-                    </tr>
+                    <td class="px-4 py-3 text-center">${stokStatus}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="editMenu(${menu.id_menu})" class="text-blue-600 hover:text-blue-800 mr-2" title="Edit">
+                            <i class="bi bi-pencil-square text-xl"></i>
+                        </button>
+                        <button onclick="nonaktifkanMenu(${menu.id_menu}, '${menu.nama_menu}')" class="text-red-600 hover:text-red-800" title="Nonaktifkan">
+                            <i class="bi bi-trash text-xl"></i>
+                        </button>
+                    </td>
+                </tr>
             `;
         });
         tbody.innerHTML = html;
@@ -316,6 +341,7 @@
         document.getElementById('ukuranContainer').style.display = 'none';
         document.getElementById('hargaContainer').style.display = 'block';
         document.getElementById('harga').value = '';
+        document.getElementById('stokMenu').value = 0;
         document.getElementById('menuModal').classList.remove('hidden');
         document.getElementById('menuModal').classList.add('flex');
     }
@@ -330,6 +356,7 @@
                 document.getElementById('namaMenu').value = menu.nama_menu;
                 document.getElementById('idKategori').value = menu.id_kategori;
                 document.getElementById('deskripsi').value = menu.deskripsi || '';
+                document.getElementById('stokMenu').value = menu.stok_menu || 0;
                 
                 document.getElementById('diskonJenis').value = menu.diskon_jenis || 'none';
                 if (menu.diskon_jenis === 'persen') {
@@ -393,7 +420,7 @@
         document.getElementById('menuModal').classList.remove('flex');
     }
 
-    // ==================== SUBMIT FORM DENGAN SWEETALERT ====================
+    // ==================== SUBMIT FORM ====================
     document.getElementById('menuForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -406,6 +433,7 @@
         formData.append('deskripsi', document.getElementById('deskripsi').value);
         formData.append('diskon_jenis', document.getElementById('diskonJenis').value);
         formData.append('diskon_nilai', document.getElementById('diskonNilai').value || 0);
+        formData.append('stok_menu', document.getElementById('stokMenu').value || 0);
         
         const kategoriId = document.getElementById('idKategori').value;
         if (kategoriId == 1) {
@@ -425,7 +453,6 @@
             formData.append('_method', 'PUT');
         }
         
-        // Tampilkan loading
         Swal.fire({
             title: 'Menyimpan...',
             text: 'Mohon tunggu sebentar',
@@ -441,19 +468,15 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // SweetAlert sukses
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
                     text: data.message,
                     confirmButtonColor: '#D73535',
                     confirmButtonText: 'OK'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Tutup modal dan refresh halaman (redirect ke index)
-                        closeModal();
-                        loadMenu(); // Refresh data di halaman index
-                    }
+                }).then(() => {
+                    closeModal();
+                    loadMenu();
                 });
             } else {
                 Swal.fire({
@@ -477,101 +500,101 @@
         });
     });
 
-// ==================== DEKLARASI VARIABEL ====================
-let deleteMenuName = '';
-function nonaktifkanMenu(id, name) {
-    deleteId = id;
-    deleteMenuName = name;
+    // ==================== NONAKTIFKAN MENU ====================
+    let deleteMenuName = '';
     
-    // Cek apakah menu sudah pernah dipesan
-    fetch(`/api/admin/menu/cek-dipesan/${id}`)
+    function nonaktifkanMenu(id, name) {
+        deleteId = id;
+        deleteMenuName = name;
+        
+        fetch(`/api/admin/menu/cek-dipesan/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('deleteMenuName').innerText = name;
+                const usageInfo = document.getElementById('menuUsageInfo');
+                const usageText = document.getElementById('menuUsageText');
+                
+                if (data.sudah_dipesan > 0) {
+                    usageInfo.classList.remove('hidden');
+                    usageText.innerHTML = `
+                        <i class="bi bi-receipt"></i> Menu ini sudah dipesan <strong>${data.sudah_dipesan}</strong> kali.
+                        <br>Data historis penjualan akan tetap tersimpan di database.
+                        <br>Menu tidak akan muncul di daftar menu kasir.
+                    `;
+                } else {
+                    usageInfo.classList.add('hidden');
+                }
+                
+                document.getElementById('deleteModal').classList.remove('hidden');
+                document.getElementById('deleteModal').classList.add('flex');
+            })
+            .catch(() => {
+                document.getElementById('deleteMenuName').innerText = name;
+                document.getElementById('menuUsageInfo').classList.add('hidden');
+                document.getElementById('deleteModal').classList.remove('hidden');
+                document.getElementById('deleteModal').classList.add('flex');
+            });
+    }
+
+    function closeDeleteModal(event) {
+        if (event && event.target !== document.getElementById('deleteModal')) return;
+        document.getElementById('deleteModal').classList.add('hidden');
+        document.getElementById('deleteModal').classList.remove('flex');
+        deleteId = null;
+    }
+
+    function confirmDelete() {
+        if (!deleteId) return;
+        
+        Swal.fire({
+            title: 'Memproses...',
+            text: 'Mohon tunggu sebentar',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+        
+        fetch(`/api/admin/menu/${deleteId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
         .then(res => res.json())
         .then(data => {
-            document.getElementById('deleteMenuName').innerText = name;
-            const usageInfo = document.getElementById('menuUsageInfo');
-            const usageText = document.getElementById('menuUsageText');
-            
-            if (data.sudah_dipesan > 0) {
-                usageInfo.classList.remove('hidden');
-                usageText.innerHTML = `
-                    <i class="bi bi-receipt"></i> Menu ini sudah dipesan <strong>${data.sudah_dipesan}</strong> kali.
-                    <br>Data historis penjualan akan tetap tersimpan di database.
-                    <br>Menu tidak akan muncul di daftar menu kasir.
-                `;
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: data.message,
+                    confirmButtonColor: '#D73535',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    closeDeleteModal();
+                    loadMenu();
+                });
             } else {
-                usageInfo.classList.add('hidden');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: data.message || 'Terjadi kesalahan',
+                    confirmButtonColor: '#D73535',
+                    confirmButtonText: 'OK'
+                });
             }
-            
-            document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('deleteModal').classList.add('flex');
         })
-        .catch(() => {
-            // Fallback jika API error
-            document.getElementById('deleteMenuName').innerText = name;
-            document.getElementById('menuUsageInfo').classList.add('hidden');
-            document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('deleteModal').classList.add('flex');
-        });
-}
-
-function closeDeleteModal(event) {
-    if (event && event.target !== document.getElementById('deleteModal')) return;
-    document.getElementById('deleteModal').classList.add('hidden');
-    document.getElementById('deleteModal').classList.remove('flex');
-    deleteId = null;
-}
-
-function confirmDelete() {
-    if (!deleteId) return;
-    
-    Swal.fire({
-        title: 'Memproses...',
-        text: 'Mohon tunggu sebentar',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
-    
-    fetch(`/api/admin/menu/${deleteId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: data.message,
-                confirmButtonColor: '#D73535',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                closeDeleteModal();
-                loadMenu();
-            });
-        } else {
+        .catch(err => {
+            console.error(err);
             Swal.fire({
                 icon: 'error',
-                title: 'Gagal!',
-                text: data.message || 'Terjadi kesalahan',
+                title: 'Error!',
+                text: 'Terjadi kesalahan pada server',
                 confirmButtonColor: '#D73535',
                 confirmButtonText: 'OK'
             });
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: 'Terjadi kesalahan pada server',
-            confirmButtonColor: '#D73535',
-            confirmButtonText: 'OK'
         });
-    });
-}
+    }
+
     // ==================== EVENT LISTENERS ====================
     document.getElementById('diskonJenis').addEventListener('change', toggleDiskonForm);
     

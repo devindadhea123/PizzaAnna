@@ -2,33 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; 
-use App\Models\Kategori;
-use App\Models\PizzaUkuran;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Menu extends Model
 {
-    use HasFactory, SoftDeletes; 
+    use SoftDeletes;
+
     protected $table = 'menu';
-
     protected $primaryKey = 'id_menu';
-
-    public $timestamps = true;
 
     protected $fillable = [
         'id_kategori',
         'nama_menu',
         'harga',
+        'stok_menu',
         'ukuran',
         'gambar',
         'diskon_jenis',
         'diskon_nilai',
         'deskripsi',
     ];
-
-    protected $dates = ['deleted_at'];
 
     public function kategori()
     {
@@ -38,5 +32,10 @@ class Menu extends Model
     public function pizzaUkuran()
     {
         return $this->hasMany(PizzaUkuran::class, 'id_menu', 'id_menu');
+    }
+    
+    public function resep()
+    {
+        return $this->hasMany(ResepMenu::class, 'id_menu', 'id_menu');
     }
 }

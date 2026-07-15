@@ -448,6 +448,19 @@ function changePizzaQty(delta)
 
     calculatePizzaTotal();
 }
+
+function calculatePizzaTotal() {
+    let qty = parseInt(document.getElementById("pizzaQty").value) || 1;
+    let toppingTotal = 0;
+
+    document.querySelectorAll(".topping:checked").forEach(t => {
+        toppingTotal += parseInt(t.dataset.price);
+    });
+
+    let total = (basePizzaPrice + toppingTotal) * qty;
+    document.getElementById("pizzaTotal").innerText = formatRupiah(total);
+}
+
 function formatRupiah(number) {
     return new Intl.NumberFormat("id-ID").format(number);
 }
@@ -474,6 +487,7 @@ function loadToppings(ukuran)
                                 value="${item.id_topping}"
                                 data-name="${item.nama_topping}"
                                 data-price="${item.harga}"
+                                onchange="calculatePizzaTotal()"
                             >
 
                             <span class="text-sm">
@@ -619,67 +633,109 @@ function loadMenu() {
                 let ukuranHtml = "";
                 
                 // KHUSUS PIZZA (id_kategori = 1)
-                if (menu.id_kategori == 1 && menu.pizza_ukuran && menu.pizza_ukuran.length > 0) {
-                    ukuranHtml = `<div class="mt-2 space-y-1">`;
-                    
-                    menu.pizza_ukuran.forEach(ukuran => {
-                        ukuranHtml += `
-                            <button onclick='openPizzaModal(
-                                ${menu.id_menu},
-                                "${menu.nama_menu.replace(/"/g, '&quot;')}",
-                                ${ukuran.harga},
-                                "${ukuran.ukuran}"
-                            )' class="w-full flex justify-between items-center bg-[#D73535] text-white hover:bg-red-700 text-xs px-2 py-1.5 rounded-lg">
-                                <span>
-                                    <i class="bi bi-pizza"></i>
-                                    Ukuran ${ukuran.ukuran}
-                                </span>
-                                <span class="font-bold">
-                                    Rp ${formatRupiah(ukuran.harga)}
-                                </span>
-                            </button>
-                        `;
-                    });
-                    
-                    ukuranHtml += `</div>`;
-                } else {
-                    // MENU NON-PIZZA
-                    ukuranHtml = `
-                        <div class="mt-2 flex justify-between items-center">
-                            <span class="font-bold text-[#D73535] text-sm">
-                                Rp ${formatRupiah(menu.harga)}
-                            </span>
-                            <button onclick='addToCart(
-                                ${menu.id_menu},
-                                "${menu.nama_menu.replace(/"/g, '&quot;')}",
-                                ${menu.harga}
-                            )' class="bg-[#D73535] text-white px-2 py-1 rounded-lg text-xs flex items-center gap-1">
-                                <i class="bi bi-plus-lg"></i> Tambah
-                            </button>
-                        </div>
-                    `;
-                }
+           // CEK STOK
+const stok = menu.stok_menu || 0;
+
+// TAMPILAN STOK
+let stokHtml = '';
+if (stok > 0) {
+    stokHtml = `
+        <div class="mt-1 flex items-center gap-1">
+            <span class="text-xs ${stok <= 3 ? 'text-red-500 font-bold' : 'text-gray-500'}">
+                <i class=""></i> Stok: ${stok}
+                ${stok <= 3 ? '<span class="text-red-500">⚠️ Menipis!</span>' : ''}
+            </span>
+        </div>
+    `;
+} else {
+    stokHtml = `
+        <div class="mt-1 text-red-500 font-bold text-xs">
+            <i class="bi bi-x-circle"></i> HABIS
+        </div>
+    `;
+}
+
+// KHUSUS PIZZA (id_kategori = 1)
+if (menu.id_kategori == 1 && menu.pizza_ukuran && menu.pizza_ukuran.length > 0) {
+    ukuranHtml = `<div class="mt-2 space-y-1">`;
+    
+    menu.pizza_ukuran.forEach(ukuran => {
+        // CEK STOK UNTUK PIZZA (pakai stok menu)
+        if (stok > 0) {
+            ukuranHtml += `
+                <button onclick='openPizzaModal(
+                    ${menu.id_menu},
+                    "${menu.nama_menu.replace(/"/g, '&quot;')}",
+                    ${ukuran.harga},
+                    "${ukuran.ukuran}"
+                )' class="w-full flex justify-between items-center bg-[#D73535] text-white hover:bg-red-700 text-xs px-2 py-1.5 rounded-lg">
+                    <span><i class="bi bi-pizza"></i> Ukuran ${ukuran.ukuran}</span>
+                    <span class="font-bold">Rp ${formatRupiah(ukuran.harga)}</span>
+                </button>
+            `;
+        } else {
+            ukuranHtml += `
+                <button class="w-full flex justify-between items-center bg-gray-300 text-gray-500 text-xs px-2 py-1.5 rounded-lg cursor-not-allowed" disabled>
+                    <span><i class="bi bi-pizza"></i> Ukuran ${ukuran.ukuran}</span>
+                    <span class="font-bold">❌ HABIS</span>
+                </button>
+            `;
+        }
+    });
+    
+    ukuranHtml += `</div>`;
+} else {
+    // MENU NON-PIZZA
+    if (stok > 0) {
+        ukuranHtml = `
+            <div class="mt-2 flex justify-between items-center">
+                <span class="font-bold text-[#D73535] text-sm">
+                    Rp ${formatRupiah(menu.harga)}
+                </span>
+                <button onclick='addToCart(
+                    ${menu.id_menu},
+                    "${menu.nama_menu.replace(/"/g, '&quot;')}",
+                    ${menu.harga}
+                )' class="bg-[#D73535] text-white px-2 py-1 rounded-lg text-xs flex items-center gap-1 hover:bg-red-700 transition">
+                    <i class="bi bi-plus-lg"></i> Tambah
+                </button>
+            </div>
+        `;
+    } else {
+        ukuranHtml = `
+            <div class="mt-2 flex justify-between items-center">
+                <span class="font-bold text-[#D73535] text-sm">
+                    Rp ${formatRupiah(menu.harga)}
+                </span>
+                <button class="bg-gray-300 text-gray-500 px-2 py-1 rounded-lg text-xs cursor-not-allowed" disabled>
+                    <i class="bi bi-x-circle"></i> Habis
+                </button>
+            </div>
+        `;
+    }
+}
                 
-                html += `
-                    <div class="menu-card bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition-all duration-300">
-                        <div class="h-36 w-full overflow-hidden bg-gray-100">
-                            ${gambarUrl ? `
-                                <img src="${gambarUrl}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
-                            ` : `
-                                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                                    <i class="bi bi-image text-4xl text-gray-300"></i>
-                                </div>
-                            `}
-                        </div>
-                        <div class="p-3">
-                            <h3 class="font-bold text-sm">${menu.nama_menu}</h3>
-                            <p class="text-gray-500 text-xs mt-1 line-clamp-2">
-                                ${menu.deskripsi ? menu.deskripsi.substring(0, 60) : "Menu lezat dari PizzaAnna"}
-                            </p>
-                            ${ukuranHtml}
-                        </div>
-                    </div>
-                `;
+html += `
+    <div class="menu-card bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition-all duration-300">
+        <div class="h-36 w-full overflow-hidden bg-gray-100">
+            ${gambarUrl ? `
+                <img src="${gambarUrl}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+            ` : `
+                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <i class="bi bi-image text-4xl text-gray-300"></i>
+                </div>
+            `}
+        </div>
+        <div class="p-3">
+            <h3 class="font-bold text-sm">${menu.nama_menu}</h3>
+            <p class="text-gray-500 text-xs mt-1 line-clamp-2">
+                ${menu.deskripsi ? menu.deskripsi.substring(0, 60) : "Menu lezat dari PizzaAnna"}
+            </p>
+            ${stokHtml}
+            ${ukuranHtml}
+        </div>
+    </div>
+`;
             });
             
             document.getElementById("menuGrid").innerHTML = html;
@@ -694,73 +750,74 @@ function loadMenu() {
             `;
         });
 }
+
 function confirmPizza() {
     const qty = parseInt(document.getElementById("pizzaQty").value || 1);
     
-    let toppings = [];
-    let toppingTotal = 0;
-    
-    document.querySelectorAll(".topping:checked").forEach(t => {
-        toppings.push({
-            id_topping: parseInt(t.value),
-            nama: t.dataset.name,
-            harga: parseInt(t.dataset.price)
-        });
-        toppingTotal += parseInt(t.dataset.price);
-    });
-    
-    let finalPrice = (basePizzaPrice + toppingTotal) * qty;
-    let toppingIds = toppings.map(t => t.id_topping);
-    
-    // Cek apakah pizza dengan spesifikasi sama sudah ada di cart
-    let found = false;
-    for (let i = 0; i < cart.length; i++) {
-        if (cart[i].id_menu === selectedPizza.id && 
-            cart[i].ukuran === selectedSize &&
-            JSON.stringify(cart[i].topping_ids || []) === JSON.stringify(toppingIds)) {
+    fetch(`/api/menu/${selectedPizza.id}`)
+        .then(res => res.json())
+        .then(menu => {
+            if (menu.stok_menu < qty) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Stok Tidak Cukup!',
+                    text: 'Stok "' + selectedPizza.name + '" tersisa ' + menu.stok_menu + ' porsi.',
+                    confirmButtonColor: '#D73535'
+                });
+                return;
+            }
             
-            cart[i].qty += qty;
-            cart[i].harga = (cart[i].harga_satuan + cart[i].topping_total) * cart[i].qty;
-            found = true;
-            console.log("Pizza ditemukan, quantity menjadi:", cart[i].qty);
-            break;
-        }
-    }
-    
-    if (!found) {
-        cart.push({
-            id_menu: selectedPizza.id,
-            name: selectedPizza.name,
-            harga: finalPrice,
-            harga_satuan: basePizzaPrice,
-            qty: qty,
-            ukuran: selectedSize,
-            topping: toppings,
-            topping_ids: toppingIds,
-            topping_total: toppingTotal,
-            custom: true
-        });
-        console.log("Pizza baru ditambahkan");
-    }
-    
-    updateCartUI();
-    closePizzaModal();
-}
-
-function calculatePizzaTotal() {
-    let total = basePizzaPrice;
-
-    let qty = parseInt(document.getElementById("pizzaQty").value || 1);
-
-let toppingTotal = toppings.reduce((sum, t) => {        return sum + (parseInt(t.price) || 0);
-    }, 0);
-
-    let final = (total + toppingTotal) * qty;
-
-    document.getElementById("pizzaTotal").innerText =
-        final.toLocaleString("id-ID");
-
-    return final;
+            // ✅ PAKAI VARIABLE LOKAL (BUKAN GLOBAL)
+            let selectedToppings = [];
+            let toppingTotal = 0;
+            
+            document.querySelectorAll(".topping:checked").forEach(t => {
+                selectedToppings.push({
+                    id_topping: parseInt(t.value),
+                    nama: t.dataset.name,
+                    harga: parseInt(t.dataset.price)
+                });
+                toppingTotal += parseInt(t.dataset.price);
+            });
+            
+            let finalPrice = (basePizzaPrice + toppingTotal) * qty;
+            let toppingIds = selectedToppings.map(t => t.id_topping);
+            
+            // Cek apakah pizza dengan spesifikasi sama sudah ada di cart
+            let found = false;
+            for (let i = 0; i < cart.length; i++) {
+                if (cart[i].id_menu === selectedPizza.id && 
+                    cart[i].ukuran === selectedSize &&
+                    JSON.stringify(cart[i].topping_ids || []) === JSON.stringify(toppingIds)) {
+                    
+                    cart[i].qty += qty;
+                    cart[i].harga = (cart[i].harga_satuan + cart[i].topping_total) * cart[i].qty;
+                    found = true;
+                    console.log("Pizza ditemukan, quantity menjadi:", cart[i].qty);
+                    break;
+                }
+            }
+            
+            if (!found) {
+                cart.push({
+                    id_menu: selectedPizza.id,
+                    name: selectedPizza.name,
+                    harga: finalPrice,
+                    harga_satuan: basePizzaPrice,
+                    qty: qty,
+                    ukuran: selectedSize,
+                    topping: selectedToppings,
+                    topping_ids: toppingIds,
+                    topping_total: toppingTotal,
+                    custom: true
+                });
+                console.log("Pizza baru ditambahkan");
+            }
+            
+            updateCartUI();
+            closePizzaModal();
+        })
+        .catch(err => console.error('Error cek stok pizza:', err));
 }
 
 function openPizzaModal(id, name, price, ukuran)
@@ -795,35 +852,49 @@ function closePizzaModal() {
 function addToCart(id, name, price) {
     console.log("Menambah ke cart:", id, name, price);
     
-    // Cari apakah item sudah ada di cart
-    let found = false;
-    for (let i = 0; i < cart.length; i++) {
-        // Bandingkan id_menu (karena menu non-pizza tidak punya ukuran)
-        if (cart[i].id_menu === id && !cart[i].ukuran) {
-            cart[i].qty++;
-            cart[i].harga = cart[i].harga_satuan * cart[i].qty;
-            found = true;
-            console.log("Item ditemukan, quantity menjadi:", cart[i].qty);
-            break;
-        }
-    }
-    
-    if (!found) {
-        cart.push({
-            id_menu: id,
-            name: name,
-            harga: price,
-            harga_satuan: price,
-            qty: 1,
-            ukuran: null,
-            topping: [],
-            topping_ids: [],
-            custom: false
-        });
-        console.log("Item baru ditambahkan");
-    }
-    
-    updateCartUI();
+    fetch(`/api/menu/${id}`)
+        .then(res => res.json())
+        .then(menu => {
+            if (menu.stok_menu <= 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Stok Habis!',
+                    text: 'Menu "' + name + '" sedang habis. Silakan pilih menu lain.',
+                    confirmButtonColor: '#D73535'
+                });
+                return;
+            }
+            
+            // Cari apakah item sudah ada di cart
+            let found = false;
+            for (let i = 0; i < cart.length; i++) {
+                if (cart[i].id_menu === id && !cart[i].ukuran) {
+                    cart[i].qty++;
+                    cart[i].harga = cart[i].harga_satuan * cart[i].qty;
+                    found = true;
+                    console.log("Item ditemukan, quantity menjadi:", cart[i].qty);
+                    break;
+                }
+            }
+            
+            if (!found) {
+                cart.push({
+                    id_menu: id,
+                    name: name,
+                    harga: price,
+                    harga_satuan: price,
+                    qty: 1,
+                    ukuran: null,
+                    topping: [],
+                    topping_ids: [],
+                    custom: false
+                });
+                console.log("Item baru ditambahkan");
+            }
+            
+            updateCartUI();
+        })
+        .catch(err => console.error('Error cek stok:', err));
 }
 function removeCart(index) {
     cart.splice(index, 1);

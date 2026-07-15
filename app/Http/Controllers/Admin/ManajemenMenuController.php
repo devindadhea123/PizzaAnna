@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\Kategori;
 use App\Models\PizzaUkuran;
-use App\Models\DetailPesanan; // ✅ TAMBAHKAN INI
+use App\Models\DetailPesanan; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +17,7 @@ class ManajemenMenuController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('role:admin');
+        // $this->middleware('role:admin')->except('getMenuById');
     }
 
     // Views
@@ -90,6 +91,7 @@ class ManajemenMenuController extends Controller
                 'nama_menu' => 'required|string|max:100',
                 'id_kategori' => 'required|exists:kategori,id_kategori',
                 'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'stok_menu' => $request->stok_menu ?? 0,
                 'diskon_jenis' => 'required|in:none,persen',
                 'diskon_nilai' => 'required_if:diskon_jenis,persen|numeric|min:0|max:100',
             ]);
@@ -124,77 +126,78 @@ class ManajemenMenuController extends Controller
     }
 
     // ==================== UPDATE MENU ====================
-    public function updateMenu(Request $request, $id)
-    {
-        try {
-            $menu = Menu::findOrFail($id);
-            
-            if ($request->id_kategori != 1) {
-                $request->validate([
-                    'nama_menu' => 'required|string|max:100',
-                    'harga' => 'required|numeric|min:0',
-                    'id_kategori' => 'required|exists:kategori,id_kategori',
-                    'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                    'diskon_jenis' => 'required|in:none,persen',
-                    'diskon_nilai' => 'required_if:diskon_jenis,persen|numeric|min:0|max:100',
-                ]);
-            } else {
-                $request->validate([
-                    'nama_menu' => 'required|string|max:100',
-                    'id_kategori' => 'required|exists:kategori,id_kategori',
-                    'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                    'diskon_jenis' => 'required|in:none,persen',
-                    'diskon_nilai' => 'required_if:diskon_jenis,persen|numeric|min:0|max:100',
-                ]);
-            }
-
-            $hargaValue = ($request->id_kategori == 1) ? 0 : $request->harga;
-            
-            $data = [
-                'nama_menu' => $request->nama_menu,
-                'harga' => $hargaValue,
-                'id_kategori' => $request->id_kategori,
-                'diskon_jenis' => $request->diskon_jenis ?? 'none',
-                'diskon_nilai' => $request->diskon_nilai ?? 0,
-                'deskripsi' => $request->deskripsi,
-            ];
-
-            if ($request->hasFile('gambar')) {
-                if ($menu->gambar && Storage::disk('public')->exists($menu->gambar)) {
-                    Storage::disk('public')->delete($menu->gambar);
-                }
-                $file = $request->file('gambar');
-                $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
-                $data['gambar'] = $file->storeAs('menu', $fileName, 'public');
-            }
-
-            $menu->update($data);
-
-            if ($request->id_kategori == 1) {
-                PizzaUkuran::where('id_menu', $menu->id_menu)->delete();
-                
-                if ($request->harga_s && $request->harga_s > 0) {
-                    PizzaUkuran::create(['id_menu' => $menu->id_menu, 'ukuran' => 'S', 'harga' => $request->harga_s]);
-                }
-                if ($request->harga_m && $request->harga_m > 0) {
-                    PizzaUkuran::create(['id_menu' => $menu->id_menu, 'ukuran' => 'M', 'harga' => $request->harga_m]);
-                }
-                if ($request->harga_l && $request->harga_l > 0) {
-                    PizzaUkuran::create(['id_menu' => $menu->id_menu, 'ukuran' => 'L', 'harga' => $request->harga_l]);
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Menu berhasil diupdate'
+ public function updateMenu(Request $request, $id)
+{
+    try {
+        $menu = Menu::findOrFail($id);
+        
+        if ($request->id_kategori != 1) {
+            $request->validate([
+                'nama_menu' => 'required|string|max:100',
+                'harga' => 'required|numeric|min:0',
+                'id_kategori' => 'required|exists:kategori,id_kategori',
+                'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'diskon_jenis' => 'required|in:none,persen',
+                'diskon_nilai' => 'required_if:diskon_jenis,persen|numeric|min:0|max:100',
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+        } else {
+            $request->validate([
+                'nama_menu' => 'required|string|max:100',
+                'id_kategori' => 'required|exists:kategori,id_kategori',
+                'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'diskon_jenis' => 'required|in:none,persen',
+                'diskon_nilai' => 'required_if:diskon_jenis,persen|numeric|min:0|max:100',
+            ]);
         }
+
+        $hargaValue = ($request->id_kategori == 1) ? 0 : $request->harga;
+        
+        $data = [
+            'nama_menu' => $request->nama_menu,
+            'harga' => $hargaValue,
+            'id_kategori' => $request->id_kategori,
+            'stok_menu' => $request->stok_menu ?? 0, // ✅ TAMBAHKAN INI
+            'diskon_jenis' => $request->diskon_jenis ?? 'none',
+            'diskon_nilai' => $request->diskon_nilai ?? 0,
+            'deskripsi' => $request->deskripsi,
+        ];
+
+        if ($request->hasFile('gambar')) {
+            if ($menu->gambar && Storage::disk('public')->exists($menu->gambar)) {
+                Storage::disk('public')->delete($menu->gambar);
+            }
+            $file = $request->file('gambar');
+            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
+            $data['gambar'] = $file->storeAs('menu', $fileName, 'public');
+        }
+
+        $menu->update($data);
+
+        if ($request->id_kategori == 1) {
+            PizzaUkuran::where('id_menu', $menu->id_menu)->delete();
+            
+            if ($request->harga_s && $request->harga_s > 0) {
+                PizzaUkuran::create(['id_menu' => $menu->id_menu, 'ukuran' => 'S', 'harga' => $request->harga_s]);
+            }
+            if ($request->harga_m && $request->harga_m > 0) {
+                PizzaUkuran::create(['id_menu' => $menu->id_menu, 'ukuran' => 'M', 'harga' => $request->harga_m]);
+            }
+            if ($request->harga_l && $request->harga_l > 0) {
+                PizzaUkuran::create(['id_menu' => $menu->id_menu, 'ukuran' => 'L', 'harga' => $request->harga_l]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Menu berhasil diupdate'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     // ==================== DELETE / NONAKTIFKAN MENU ====================
     public function deleteMenu($id)

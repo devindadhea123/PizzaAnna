@@ -49,6 +49,19 @@
         <span>Manajemen Menu</span>
       </a>
 
+      <!-- Resep Menu -->
+                <a href="{{ route('admin.resep-menu') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.resep-menu') ? 'bg-[#D73535] shadow-lg shadow-red-900/30' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
+                    <i class="bi bi-list-ul text-xl w-5"></i>
+                    <span>Resep Menu</span>
+                </a>
+                
+      <!-- Bahan Baku -->
+            <a href="{{ route('admin.bahan-baku') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.bahan-baku') ? 'bg-[#D73535] shadow-lg shadow-red-900/30' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
+                <i class="bi bi-boxes text-xl w-5"></i>
+                <span>Bahan Baku</span>
+            </a>
+
+                
       <!-- Kategori -->
       <a
         href="{{ route('admin.kategori') }}"
@@ -76,11 +89,12 @@
         <span>Kelola Akun</span>
       </a>
 
+      
+
       <!-- Pengaturan Jadwal Prediksi (SUDAH RAPI) -->
       <a
         href="{{ route('admin.pengaturan-jadwal') }}"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.pengaturan-jadwal') ? 'bg-[#D73535] shadow-lg shadow-red-900/30' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}"
-      >
+        class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.pengaturan-jadwal') ? 'bg-[#D73535] shadow-lg shadow-red-900/30' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
         <i class="bi-calendar2-week-fill w-5"></i>
         <span>Pengaturan Jadwal</span>
       </a>

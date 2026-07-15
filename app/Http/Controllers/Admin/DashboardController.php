@@ -9,6 +9,7 @@ use App\Models\DetailPesanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -33,11 +34,38 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // ✅ AMBIL BULAN DAN TAHUN YANG ADA DI TABEL PESANAN
+        $bulanTersedia = Pesanan::selectRaw('DISTINCT YEAR(tanggal) as tahun, MONTH(tanggal) as bulan')
+            ->whereNotNull('tanggal')
+            ->orderBy('tahun', 'asc')
+            ->orderBy('bulan', 'asc')
+            ->get();
+
+        // ✅ FORMAT UNTUK DROPDOWN
+        $daftarBulan = [];
+        foreach ($bulanTersedia as $item) {
+            $bulanNama = Carbon::create($item->tahun, $item->bulan, 1)->translatedFormat('F');
+            $daftarBulan[] = [
+                'bulan' => $item->bulan,
+                'tahun' => $item->tahun,
+                'label' => $bulanNama . ' ' . $item->tahun,
+                'value' => $item->tahun . '-' . str_pad($item->bulan, 2, '0', STR_PAD_LEFT)
+            ];
+        }
+
+        // ✅ KIRIM KE VIEW
         return view('admin.dashboard', compact(
-            'totalKaryawan', 'pendapatanHariIni', 'pendapatanBulanIni',
-            'pendapatanTunai', 'pendapatanQris', 'topMenus'
+            'totalKaryawan', 
+            'pendapatanHariIni', 
+            'pendapatanBulanIni',
+            'pendapatanTunai', 
+            'pendapatanQris', 
+            'topMenus',
+            'daftarBulan' 
         ));
     }
+
+
 
 public function getDashboardData(Request $request)
 {
@@ -133,6 +161,8 @@ public function getOmzetChart(Request $request)
     
     return response()->json(['labels' => $dates, 'values' => $values]);
 }
+
+
 
 public function getPaymentChart(Request $request)
 {

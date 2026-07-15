@@ -24,6 +24,11 @@ class Kernel extends ConsoleKernel
             // Fallback jika tabel settings belum ada
             $schedule->command('prediksi:otomatis')->dailyAt('12:00');
         }
+
+        {
+          // Update aktual otomatis setiap tanggal 27 jam 00:00
+          $schedule->command('prediksi:update-aktual')->monthlyOn(27, '00:00');
+        }
     }
     
     protected function commands(): void

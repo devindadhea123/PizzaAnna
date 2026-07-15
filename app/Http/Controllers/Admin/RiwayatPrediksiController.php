@@ -28,6 +28,9 @@ class RiwayatPrediksiController extends Controller
 
     public function getPredictions(Request $request)
     {
+        // Secara otomatis mengecek dan mengupdate akurasi yang sudah masuk kriteria (lewat bulan atau tanggal 27)
+        $this->updateAllAkurasi();
+
         $query = RiwayatPrediksi::query();
         
         if ($request->month && $request->month != 'all') {
@@ -38,6 +41,18 @@ class RiwayatPrediksiController extends Controller
         }
         
         $predictions = $query->orderBy('tanggal_prediksi', 'desc')->paginate(6);
+
+        // Inject dynamic stock status details
+        $predictions->getCollection()->transform(function ($prediction) {
+            $hasil = $prediction->hasil_prediksi;
+            if (is_string($hasil)) {
+                $hasil = json_decode($hasil, true);
+            }
+            if (is_array($hasil)) {
+                $prediction->hasil_prediksi = $this->injectStockDetails($hasil);
+            }
+            return $prediction;
+        });
         
         return response()->json($predictions);
     }
@@ -45,6 +60,29 @@ class RiwayatPrediksiController extends Controller
     public function getPredictionDetail($id)
     {
         $prediction = RiwayatPrediksi::findOrFail($id);
+
+        if (is_null($prediction->detail_akurasi)) {
+            $bulanTarget = $prediction->bulan_target;
+            $tahun = substr($bulanTarget, 0, 4);
+            $bulan = substr($bulanTarget, 5, 2);
+            $targetDate = \Carbon\Carbon::create($tahun, $bulan, 1);
+            
+            $isPastMonth = now()->startOfMonth() > $targetDate->endOfMonth();
+            $isTargetMonthAndDay27 = (now()->format('Y-m') === $bulanTarget && now()->day >= 27);
+            
+            if ($isPastMonth || $isTargetMonthAndDay27) {
+                $this->updateAkurasi($id);
+                $prediction->refresh();
+            }
+        }
+
+        $hasil = $prediction->hasil_prediksi;
+        if (is_string($hasil)) {
+            $hasil = json_decode($hasil, true);
+        }
+        if (is_array($hasil)) {
+            $prediction->hasil_prediksi = $this->injectStockDetails($hasil);
+        }
         
         return response()->json([
             'id_prediksi' => $prediction->id_prediksi,
@@ -169,23 +207,23 @@ class RiwayatPrediksiController extends Controller
 
     // ==================== METHOD WMA ====================
 
-    private function hitungWMA($data)
+    private function hitungWMAMingguan($dataMingguan)
     {
-        if (empty($data) || count($data) < 6) {
-            $data = array_pad($data, 6, 0);
+        if(count($dataMingguan) < 4){
+            $dataMingguan = array_pad($dataMingguan, 4, 0);
         }
-        
-        $bobot = [1, 2, 3, 4, 5, 6];
-        $totalBobot = array_sum($bobot);
-        
-        $totalPerkalian = 0;
-        for ($i = 0; $i < 6; $i++) {
-            $totalPerkalian += ($data[$i] ?? 0) * $bobot[$i];
+
+        $bobot = [0.1, 0.2, 0.3, 0.4];
+        $hasil = 0;
+
+        for($i = 0; $i < 4; $i++){
+            $hasil += ($dataMingguan[$i] ?? 0) * $bobot[$i];
         }
-        
-        return $totalBobot > 0 ? round($totalPerkalian / $totalBobot, 2) : 0;
+
+        return round($hasil * 4.35, 2);
     }
 
+    
     private function generateRekomendasiPromosi($hasilPrediksi)
     {
         $rekomendasi = [];
@@ -460,22 +498,45 @@ class RiwayatPrediksiController extends Controller
     public function lakukanPrediksi(Request $request)
     {
         try {
-            $bulanTarget = now()->addMonth()->format('Y-m');
+            $request->validate([
+                'target_month' => 'required|integer|min:1|max:12',
+                'target_year' => 'required|integer'
+            ]);
+
+            $targetMonth = str_pad($request->target_month, 2, '0', STR_PAD_LEFT);
+            $bulanTarget = $request->target_year . '-' . $targetMonth;
+            $formatBulanTarget = \Carbon\Carbon::createFromFormat('Y-m', $bulanTarget)->translatedFormat('F Y');
+
             $existingPrediksi = RiwayatPrediksi::where('bulan_target', $bulanTarget)->first();
             
             if ($existingPrediksi) {
+                $hasilPrediksi = $existingPrediksi->hasil_prediksi;
+                if (is_string($hasilPrediksi)) {
+                    $hasilPrediksi = json_decode($hasilPrediksi, true);
+                }
+                
+                $rekomendasiPromosi = $existingPrediksi->rekomendasi_promosi;
+                if (is_string($rekomendasiPromosi)) {
+                    $rekomendasiPromosi = json_decode($rekomendasiPromosi, true);
+                }
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Prediksi untuk bulan ' . now()->addMonth()->format('F Y') . ' sudah ada.'
-                ], 422);
+                    'success' => true,
+                    'already_exists' => true,
+                    'message' => 'Prediksi untuk bulan ' . $formatBulanTarget . ' sudah pernah dilakukan. Menampilkan data historis.',
+                    'data' => $this->injectStockDetails($hasilPrediksi),
+                    'rekomendasi' => $rekomendasiPromosi,
+                    'periode' => $existingPrediksi->data_yang_dipakai,
+                    'bulan_target' => $formatBulanTarget,
+                ]);
             }
             
-            $dataPenjualan = $this->getDataPenjualan6Bulan();
+            $dataPenjualan = $this->getDataPenjualanUntukPrediksi($bulanTarget);
             
             if (empty($dataPenjualan)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Data penjualan tidak cukup untuk prediksi. Minimal 6 bulan data diperlukan.'
+                    'message' => 'Data penjualan historis tidak ditemukan untuk memprediksi bulan ini.'
                 ], 422);
             }
             
@@ -488,11 +549,12 @@ class RiwayatPrediksiController extends Controller
             $hasilPrediksi = [];
             $ranking = 1;
             foreach ($top3 as $item) {
-                $dataTerbaru = end($item['data_6_bulan']);
+                $dataTerbaru = array_sum($item['data_mingguan']);
                 $persentaseKenaikan = $this->hitungPersentaseKenaikan($item['prediksi_wma'], $dataTerbaru);
                 
                 $hasilPrediksi[] = [
                     'ranking' => $ranking++,
+                    'id_menu' => $item['id_menu'],
                     'nama_menu' => $item['nama_menu'],
                     'harga' => $item['harga'],
                     'prediksi' => round($item['prediksi_wma']),
@@ -502,8 +564,11 @@ class RiwayatPrediksiController extends Controller
             
             $rekomendasiPromosi = $this->generateRekomendasiPromosi($hasilPrediksi);
             
-            $periodeData = now()->subMonths(5)->startOfMonth()->format('F Y') . ' - ' . now()->format('F Y');
-            
+            // Format periode data dengan tanggal 27 - 27
+            $tanggalAwal = '27 ' . \Carbon\Carbon::createFromFormat('Y-m', $bulanTarget)->subMonth()->translatedFormat('F Y');
+            $tanggalAkhir = '27 ' . \Carbon\Carbon::createFromFormat('Y-m', $bulanTarget)->translatedFormat('F Y');
+
+            $periodeData = $tanggalAwal . ' - ' . $tanggalAkhir;            
             RiwayatPrediksi::create([
                 'tanggal_prediksi' => now(),
                 'bulan_target' => $bulanTarget,
@@ -517,10 +582,10 @@ class RiwayatPrediksiController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Prediksi berhasil dilakukan dengan metode Weighted Moving Average (WMA)',
-                'data' => $hasilPrediksi,
+                'data' => $this->injectStockDetails($hasilPrediksi),
                 'rekomendasi' => $rekomendasiPromosi,
                 'periode' => $periodeData,
-                'bulan_target' => now()->addMonth()->format('F Y'),
+                'bulan_target' => $formatBulanTarget,
             ]);
             
         } catch (\Exception $e) {
@@ -532,51 +597,53 @@ class RiwayatPrediksiController extends Controller
         }
     }
 
-    // ==================== DATA PENJUALAN 6 BULAN ====================
-    private function getDataPenjualan6Bulan()
+    // ==================== DATA PENJUALAN HISTORIS (WMA 1 BULAN) ====================
+    private function getDataPenjualanUntukPrediksi($bulanTarget)
     {
-        $totalPenjualan = DetailPesanan::count();
-        if ($totalPenjualan == 0) {
-            return [];
-        }
-        
         $menus = Menu::all();
-        
-        if ($menus->isEmpty()) {
-            return [];
-        }
-        
         $dataPenjualan = [];
         
+        $targetDate = \Carbon\Carbon::createFromFormat('Y-m', $bulanTarget);
+        
+        // Sesuai instruksi: Jika target Feb 2026, historis = 28 Jan 2026 s/d 27 Feb 2026
+        $akhirBulanHistoris = $targetDate->copy()->setDay(27)->endOfDay();
+        $awalBulanHistoris = $targetDate->copy()->subMonth()->setDay(28)->startOfDay();
+
         foreach ($menus as $menu) {
-            $penjualanPerBulan = [];
-            
-            for ($i = 5; $i >= 0; $i--) {
-                $bulan = now()->subMonths($i);
-                $bulanAwal = $bulan->copy()->startOfMonth();
-                $bulanAkhir = $bulan->copy()->endOfMonth();
-                
-                $total = DetailPesanan::where('detail_pesanan.id_menu', $menu->id_menu)
-                    ->whereHas('pesanan', function($q) use ($bulanAwal, $bulanAkhir) {
-                        $q->whereBetween('tanggal', [$bulanAwal, $bulanAkhir]);
+            $mingguan = [];
+
+            for ($m = 1; $m <= 4; $m++) {
+                $awal = $awalBulanHistoris->copy()->addWeeks($m - 1);
+
+                if ($m == 4) {
+                    $akhir = $akhirBulanHistoris->copy();
+                } else {
+                    $akhir = $awal->copy()->addDays(6)->endOfDay();
+                }
+
+                $totalMinggu = DetailPesanan::where('detail_pesanan.id_menu', $menu->id_menu)
+                    ->whereHas('pesanan', function ($q) use ($awal, $akhir) {
+                        $q->whereBetween('tanggal', [$awal, $akhir]);
                     })
                     ->sum('detail_pesanan.jumlah');
-                
-                $penjualanPerBulan[] = $total;
+
+                $mingguan[] = $totalMinggu;
             }
+
+            $prediksi = $this->hitungWMAMingguan($mingguan);
             
-            if (array_sum($penjualanPerBulan) > 0) {
+            // Masukkan data jika menu pernah terjual setidaknya sekali dalam bulan tersebut atau prediksinya > 0
+            if ($prediksi > 0 || array_sum($mingguan) > 0) {
                 $dataPenjualan[$menu->id_menu] = [
                     'id_menu' => $menu->id_menu,
                     'nama_menu' => $menu->nama_menu,
                     'harga' => $menu->harga,
-                    'data_6_bulan' => $penjualanPerBulan,
-                    'total_6_bulan' => array_sum($penjualanPerBulan),
-                    'prediksi_wma' => $this->hitungWMA($penjualanPerBulan),
+                    'data_mingguan' => $mingguan,
+                    'prediksi_wma' => $prediksi,
                 ];
             }
         }
-        
+
         return $dataPenjualan;
     }
 
@@ -622,6 +689,10 @@ class RiwayatPrediksiController extends Controller
             $hasilPrediksi = json_decode($hasilPrediksi, true);
         }
         
+        $targetDate = \Carbon\Carbon::createFromFormat('Y-m', $bulanTarget);
+        $akhirBulanTarget = $targetDate->copy()->setDay(27)->endOfDay();
+        $awalBulanTarget = $targetDate->copy()->subMonth()->setDay(28)->startOfDay();
+        
         $aktualPenjualan = DetailPesanan::select(
             'menu.id_menu',
             'menu.nama_menu',
@@ -629,8 +700,7 @@ class RiwayatPrediksiController extends Controller
         )
         ->join('pesanan', 'detail_pesanan.id_pesanan', '=', 'pesanan.id_pesanan')
         ->join('menu', 'detail_pesanan.id_menu', '=', 'menu.id_menu')
-        ->whereYear('pesanan.tanggal', substr($bulanTarget, 0, 4))
-        ->whereMonth('pesanan.tanggal', substr($bulanTarget, 5, 2))
+        ->whereBetween('pesanan.tanggal', [$awalBulanTarget, $akhirBulanTarget])
         ->groupBy('menu.id_menu', 'menu.nama_menu')
         ->get()
         ->keyBy('nama_menu');
@@ -684,8 +754,12 @@ class RiwayatPrediksiController extends Controller
             $bulanTarget = $prediction->bulan_target;
             $tahun = substr($bulanTarget, 0, 4);
             $bulan = substr($bulanTarget, 5, 2);
+            $targetDate = \Carbon\Carbon::create($tahun, $bulan, 1);
             
-            if (now()->startOfMonth() > \Carbon\Carbon::create($tahun, $bulan, 1)->endOfMonth()) {
+            $isPastMonth = now()->startOfMonth() > $targetDate->endOfMonth();
+            $isTargetMonthAndDay27 = (now()->format('Y-m') === $bulanTarget && now()->day >= 27);
+            
+            if ($isPastMonth || $isTargetMonthAndDay27) {
                 $this->updateAkurasi($prediction->id_prediksi);
                 $updated++;
             }
@@ -695,5 +769,60 @@ class RiwayatPrediksiController extends Controller
             'success' => true,
             'message' => "Updated {$updated} predictions"
         ]);
+    }
+
+    private function injectStockDetails($hasilPrediksi)
+    {
+        if (empty($hasilPrediksi) || !is_array($hasilPrediksi)) {
+            return $hasilPrediksi;
+        }
+
+        foreach ($hasilPrediksi as &$item) {
+            $idMenu = $item['id_menu'] ?? null;
+            if (!$idMenu) {
+                // fallback if id_menu is missing (legacy records)
+                $menu = \App\Models\Menu::where('nama_menu', $item['nama_menu'])->first();
+                $idMenu = $menu ? $menu->id_menu : null;
+            }
+
+            $stokAman = true;
+            $stokDetail = [];
+
+            if ($idMenu) {
+                $resepItems = \App\Models\ResepMenu::with('bahanBaku')
+                    ->where('id_menu', $idMenu)
+                    ->get();
+
+                foreach ($resepItems as $resep) {
+                    $bahan = $resep->bahanBaku;
+                    if ($bahan) {
+                        $kebutuhan = $resep->jumlah * ($item['prediksi'] ?? 0);
+                        $stokSaatIni = $bahan->stok;
+                        $selisih = $stokSaatIni - $kebutuhan;
+                        $isAman = $selisih >= 0;
+
+                        if (!$isAman) {
+                            $stokAman = false;
+                        }
+
+                        $stokDetail[] = [
+                            'id_bahan' => $bahan->id_bahan,
+                            'nama_bahan' => $bahan->nama_bahan,
+                            'kebutuhan' => $kebutuhan,
+                            'stok' => $stokSaatIni,
+                            'satuan' => $bahan->satuan,
+                            'is_aman' => $isAman,
+                            'kurang' => $isAman ? 0 : abs($selisih)
+                        ];
+                    }
+                }
+            }
+
+            $item['id_menu'] = $idMenu;
+            $item['is_stok_aman'] = $stokAman;
+            $item['stok_detail'] = $stokDetail;
+        }
+
+        return $hasilPrediksi;
     }
 }

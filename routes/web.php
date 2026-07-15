@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\ManajemenMenuController;
 use App\Http\Controllers\Admin\RiwayatPesananController;
 use App\Http\Controllers\Admin\RiwayatPrediksiController;
+use App\Http\Controllers\Admin\BahanBakuController;
+use App\Http\Controllers\Admin\ResepMenuController;
 use App\Http\Controllers\Kasir\KasirController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Public\HomeController;
@@ -29,11 +31,12 @@ Route::get('/api/menu', [MenuApiController::class, 'menu']);
 Route::get('/api/admin/menu/cek-dipesan/{id}', [ManajemenMenuController::class, 'cekDipesan']);
 Route::get('/api/menu/category/{id}', [MenuApiController::class, 'menuByKategori']); 
 Route::get('/api/kategori', [MenuApiController::class, 'kategori']);
+ Route::get('/api/menu/{id}', [MenuApiController::class, 'show']);
 
 // ==================== ADMIN ROUTES (WEB) ====================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/riwayat-pesanan', [RiwayatPesananController::class, 'index'])->name('riwayat-pesanan');
+    Route::get('/riwaycat-pesanan', [RiwayatPesananController::class, 'index'])->name('riwayat-pesanan');
     Route::get('/riwayat-prediksi', [RiwayatPrediksiController::class, 'index'])->name('riwayat-prediksi');
     Route::get('/manajemen-menu', [ManajemenMenuController::class, 'index'])->name('manajemen-menu');
     Route::get('/menu/create', [ManajemenMenuController::class, 'create'])->name('menu.create');
@@ -46,6 +49,29 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/riwayat-pesanan/export/excel', [RiwayatPesananController::class, 'exportOrdersExcel']);
     Route::get('/riwayat-pesanan/export/pdf', [RiwayatPesananController::class, 'exportOrdersPDF']);
     Route::get('/kelola-akun', [KelolaAkunController::class, 'index'])->name('kelola-akun');
+
+    
+    // ==================== BAHAN BAKU ====================
+Route::get('/bahan-baku', [BahanBakuController::class, 'index'])->name('bahan-baku');
+Route::post('/bahan-baku/store', [BahanBakuController::class, 'store'])->name('bahan-baku.store');
+Route::put('/bahan-baku/update/{id}', [BahanBakuController::class, 'update'])->name('bahan-baku.update');
+Route::delete('/bahan-baku/delete/{id}', [BahanBakuController::class, 'destroy'])->name('bahan-baku.delete');
+Route::post('/bahan-baku/tambah-stok/{id}', [BahanBakuController::class, 'tambahStok'])->name('bahan-baku.tambah-stok');
+Route::post('/bahan-baku/kurangi-stok/{id}', [BahanBakuController::class, 'kurangiStok'])->name('bahan-baku.kurangi-stok');
+
+// ==================== RESEP MENU ====================
+Route::get('/resep-menu', [ResepMenuController::class, 'index'])->name('resep-menu');
+Route::post('/resep-menu/store', [ResepMenuController::class, 'store'])->name('resep-menu.store');
+Route::put('/resep-menu/update/{id}', [ResepMenuController::class, 'update'])->name('resep-menu.update');
+Route::delete('/resep-menu/delete/{id}', [ResepMenuController::class, 'destroy'])->name('resep-menu.delete');
+Route::post('/admin/resep-menu/store-bulk', [ResepMenuController::class, 'storeBulk'])->name('admin.resep-menu.store-bulk');
+// Resep Menu
+Route::get('/resep-menu', [ResepMenuController::class, 'index'])->name('resep-menu');
+Route::get('/resep-menu/create', [ResepMenuController::class, 'create'])->name('resep-menu.create');
+Route::get('/resep-menu/edit/{id}', [ResepMenuController::class, 'edit'])->name('resep-menu.edit');
+Route::post('/resep-menu/store-bulk', [ResepMenuController::class, 'storeBulk'])->name('resep-menu.store-bulk');
+Route::post('/resep-menu/update-bulk/{id}', [ResepMenuController::class, 'updateBulk'])->name('resep-menu.update-bulk');
+Route::delete('/resep-menu/delete/{id}', [ResepMenuController::class, 'destroy'])->name('resep-menu.delete');
 }); 
 
 // ==================== KASIR ROUTES (WEB) ====================
@@ -55,8 +81,27 @@ Route::middleware(['auth', 'role:kasir'])->prefix('kasir')->name('kasir.')->grou
     Route::get('/riwayat-pesanan', [KasirController::class, 'riwayatPesanan'])->name('riwayat-pesanan');
     Route::get('/harga-by-ukuran', [KasirController::class, 'getHargaByUkuran']);
     Route::get('/toppings', [KasirController::class, 'getToppings']);
-    Route::post('/cetak-pdf', [KasirController::class, 'cetakPDF'])->name('cetak-pdf');
+    Route::post('/cetak-pdf', [KasirController::class, 'cetakPDF'])->name('cetak-pdf'); 
+    
+    // ============================================
+    // ROUTE PREDIKSI FLEXIBLE (BARU)
+    // ============================================
+    Route::post('/prediksi/flexible', [RiwayatPrediksiController::class, 'lakukanPrediksiFlexible'])
+        ->name('admin.prediksi.flexible');
+    
+    // Update Aktual (BARU)
+    Route::post('/prediksi/update-aktual/{id}', [RiwayatPrediksiController::class, 'updateAktual'])
+        ->name('admin.prediksi.update-aktual');
+    
+    Route::post('/prediksi/update-all-aktual', [RiwayatPrediksiController::class, 'updateAllAktual'])
+        ->name('admin.prediksi.update-all-aktual');
+
 });
+
+
+
+
+
 
 // ==================== ADMIN API ROUTES ====================
 Route::middleware(['auth', 'role:admin'])->prefix('api/admin')->group(function () {
@@ -69,12 +114,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('api/admin')->group(function (
     Route::get('/filter-options', [DashboardController::class, 'getFilterOptions']);
     
     // Menu Management API
-    Route::get('/menu', [ManajemenMenuController::class, 'getMenu']);
-    Route::get('/menu/{id}', [ManajemenMenuController::class, 'getMenuById']);
     Route::post('/menu', [ManajemenMenuController::class, 'storeMenu']);
     Route::put('/menu/{id}', [ManajemenMenuController::class, 'updateMenu']);
     Route::delete('/menu/{id}', [ManajemenMenuController::class, 'deleteMenu']);
-    
+    Route::get('/menu', [ManajemenMenuController::class, 'getMenu']);
+     Route::get('/menu/{id}', [ManajemenMenuController::class, 'getMenuById']);
+
     // Kategori Management API
     Route::get('/kategori', [KategoriController::class, 'getKategori']);
     Route::get('/kategori/{id}', [KategoriController::class, 'getKategoriById']);
@@ -114,6 +159,15 @@ Route::middleware(['auth', 'role:admin'])->prefix('api/admin')->group(function (
 
     //akurasi
     Route::post('/update-akurasi/{id}', [RiwayatPrediksiController::class, 'updateAkurasi']);
+
+   // ==================== BAHAN BAKU API ====================
+Route::get('/bahan-baku', [BahanBakuController::class, 'getAll']);
+Route::get('/bahan-baku/{id}', [BahanBakuController::class, 'show']);
+
+// ==================== RESEP MENU API ====================
+Route::get('/resep-menu', [ResepMenuController::class, 'getAll']);
+Route::get('/resep-menu/{id}', [ResepMenuController::class, 'show']);
+Route::get('/resep-menu/by-menu/{id}', [ResepMenuController::class, 'getByMenu']);
 });
 
 // ==================== KASIR API ROUTES ====================

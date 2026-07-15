@@ -141,12 +141,29 @@
     <div class="bg-gradient-to-r from-[#D73535] to-red-700 rounded-2xl shadow-sm p-6 mb-8 text-white">
         <div class="flex justify-between items-center flex-wrap gap-4">
             <div>
-            <h2 class="text-xl font-bold">Prediksi Menu Terlaris</h2>               
-             <p class="text-white/60 text-xs mt-2" id="periodeData">Periode: -</p>
+                <h2 class="text-xl font-bold">Prediksi Menu Terlaris</h2>               
+                <p class="text-white/60 text-xs mt-2" id="periodeData">Periode: -</p>
             </div>
-            <button onclick="lakukanPrediksi()" id="prediksiBtn" class="bg-yellow-400 text-gray-900 px-6 py-2 rounded-full font-semibold hover:bg-yellow-500 transition flex items-center gap-2">
-                <i class="bi bi-magic"></i> Lakukan Prediksi
-            </button>
+            <div class="flex gap-2 items-center flex-wrap">
+                <select id="targetMonth" class="text-gray-900 text-sm border rounded-lg px-3 py-2 bg-white">
+                    <option value="1" {{ date('n') == 1 ? 'selected' : '' }}>Januari</option>
+                    <option value="2" {{ date('n') == 2 ? 'selected' : '' }}>Februari</option>
+                    <option value="3" {{ date('n') == 3 ? 'selected' : '' }}>Maret</option>
+                    <option value="4" {{ date('n') == 4 ? 'selected' : '' }}>April</option>
+                    <option value="5" {{ date('n') == 5 ? 'selected' : '' }}>Mei</option>
+                    <option value="6" {{ date('n') == 6 ? 'selected' : '' }}>Juni</option>
+                    <option value="7" {{ date('n') == 7 ? 'selected' : '' }}>Juli</option>
+                    <option value="8" {{ date('n') == 8 ? 'selected' : '' }}>Agustus</option>
+                    <option value="9" {{ date('n') == 9 ? 'selected' : '' }}>September</option>
+                    <option value="10" {{ date('n') == 10 ? 'selected' : '' }}>Oktober</option>
+                    <option value="11" {{ date('n') == 11 ? 'selected' : '' }}>November</option>
+                    <option value="12" {{ date('n') == 12 ? 'selected' : '' }}>Desember</option>
+                </select>
+                <input type="number" id="targetYear" class="text-gray-900 text-sm border rounded-lg px-3 py-2 w-24 bg-white" placeholder="Tahun" value="{{ date('Y') }}">
+                <button onclick="lakukanPrediksi()" id="prediksiBtn" class="bg-yellow-400 text-gray-900 px-6 py-2 rounded-full font-semibold hover:bg-yellow-500 transition flex items-center gap-2">
+                    <i class="bi bi-magic"></i> Lakukan Prediksi
+                </button>
+            </div>
         </div>
         
         <!-- Hasil Prediksi -->
@@ -166,11 +183,6 @@
 <script>
     let currentMonth = '';
     let currentYear = '';
-    let pollingInterval = null;
-    let predictionChecked = false;
-    let autoPredictionTriggered = false;
-    let intensiveInterval = null;
-    let statusCheckInterval = null;
     
     function formatRupiah(angka) {
         if (!angka && angka !== 0) return '0';
@@ -211,46 +223,20 @@
                         `;
                     } 
                     // Kasus 2: Hari prediksi dan belum lewat deadline
-// Kasus 2: Hari prediksi dan belum lewat deadline
-else if (data.is_prediction_day && data.is_before_deadline && !data.has_prediction) {
-    notifHtml = `
-        <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-lg shadow-md">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <i class="bi bi-bell-fill text-2xl text-yellow-600"></i>
-                </div>
-                <div class="ml-3 flex-1">
-                    <p class="font-bold text-lg"> Hari ini tanggal ${data.prediction_date}! Waktunya Prediksi!</p>
-                    <p class="text-sm mt-1">Lakukan prediksi menu terlaris untuk <span class="font-semibold">${data.formatted_bulan || data.bulan_target || 'bulan depan'}</span>.</p>
-                    <p class="text-xs mt-1 text-yellow-600">
-                        <i class="bi bi-clock"></i> Anda masih punya waktu hingga <span class="font-bold">${data.deadline_time}</span>.
-                        <span class="font-semibold">Belum ada prediksi untuk bulan depan.</span>
-                    </p>
-                    <div class="mt-2 flex gap-2">
-                        <div class="bg-yellow-100 rounded-full px-3 py-1 text-xs">
-                            <i class="bi bi-hand-index-thumb"></i> Klik tombol "Lakukan Prediksi" sekarang
-                        </div>
-                        <div class="bg-gray-100 rounded-full px-3 py-1 text-xs">
-                            <i class="bi bi-clock-history"></i> Atau tunggu sistem otomatis jam ${data.deadline_time}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-                    // Kasus 3: Sudah lewat deadline tapi belum ada prediksi
-                    else if (data.is_prediction_day && !data.is_before_deadline && !data.has_prediction) {
+                    // Kasus 2: Hari prediksi tapi belum ada prediksi otomatis
+                    else if (data.is_prediction_day && !data.has_prediction) {
                         notifHtml = `
-                            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-lg shadow-md">
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-lg shadow-md">
                                 <div class="flex items-start">
                                     <div class="flex-shrink-0">
-                                        <i class="bi bi-hourglass-split text-2xl text-blue-600 animate-spin"></i>
+                                        <i class="bi bi-bell-fill text-2xl text-yellow-600"></i>
                                     </div>
                                     <div class="ml-3 flex-1">
-                                        <p class="font-bold text-lg"> Sistem Sedang Memproses Prediksi</p>
-                                        <p class="text-sm mt-1">Waktu prediksi manual telah berakhir. Sistem akan menjalankan prediksi otomatis.</p>
-                                        <p class="text-xs mt-1 text-blue-600">Mohon tunggu, halaman akan refresh setelah prediksi selesai.</p>
+                                        <p class="font-bold text-lg"> Hari ini tanggal ${data.prediction_date}! Jadwal Prediksi Otomatis.</p>
+                                        <p class="text-sm mt-1">Sistem akan melakukan prediksi otomatis untuk <span class="font-semibold">${data.formatted_bulan || data.bulan_target || 'bulan depan'}</span> pada jam <span class="font-bold">${data.deadline_time}</span>.</p>
+                                        <p class="text-xs mt-1 text-yellow-600">
+                                            <i class="bi bi-info-circle"></i> Anda tetap bisa melakukan prediksi manual kapan saja tanpa batasan.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -484,7 +470,15 @@ function loadPaymentChart() {
     // PREDIKSI MANUAL
     function lakukanPrediksi() {
         const btn = document.getElementById('prediksiBtn');
-        const originalText = btn.innerHTML;
+        const originalText = '<i class="bi bi-magic"></i> Lakukan Prediksi';
+        const targetMonth = document.getElementById('targetMonth').value;
+        const targetYear = document.getElementById('targetYear').value;
+
+        if (!targetYear) {
+            Swal.fire('Error', 'Tahun target tidak boleh kosong', 'error');
+            return;
+        }
+
         btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Memproses...';
         btn.disabled = true;
         
@@ -494,136 +488,56 @@ function loadPaymentChart() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({
+                target_month: targetMonth,
+                target_year: targetYear
+            })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 displayPredictionResult(data);
-                updateNotifications(); // Update notifikasi setelah prediksi berhasil
-                btn.disabled = true;
-                btn.innerHTML = 'Prediksi Selesai';
-                btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-                btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                predictionChecked = true;
-                autoPredictionTriggered = true;
-                stopAllIntervals();
-            } else {
-                alert('Gagal: ' + data.message);
-                btn.innerHTML = originalText;
+                updateNotifications(); // Update notifikasi
+                
+                if (data.already_exists) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Info',
+                        text: data.message,
+                        confirmButtonColor: '#3085d6'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Prediksi berhasil dilakukan',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+                
+                // Kembalikan tombol ke keadaan semula
                 btn.disabled = false;
+                btn.innerHTML = originalText;
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Gagal',
+                    text: data.message,
+                    confirmButtonColor: '#D73535'
+                });
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error: ' + error.message);
+            Swal.fire('Error', error.message, 'error');
+            btn.disabled = false;
             btn.innerHTML = originalText;
-            btn.disabled = false;
         });
     }
     
-    // INTENSIVE CHECK UNTUK AUTO PREDIKSI
-    function startIntensiveCheck() {
-        if (intensiveInterval) return;
-        
-        console.log('📡 Memulai intensive check untuk auto prediksi (cek setiap detik)');
-        
-        intensiveInterval = setInterval(() => {
-            fetch('/api/admin/prediction-status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.need_auto_prediction && !autoPredictionTriggered && !predictionChecked) {
-                        console.log('Waktunya auto prediksi! Menjalankan...');
-                        clearInterval(intensiveInterval);
-                        intensiveInterval = null;
-                        lakukanPrediksiOtomatis();
-                    }
-                    if (data.has_prediction) {
-                        if (intensiveInterval) {
-                            clearInterval(intensiveInterval);
-                            intensiveInterval = null;
-                        }
-                        updateNotifications(); // Update notifikasi jika sudah ada prediksi
-                    }
-                })
-                .catch(err => console.error('Intensive check error:', err));
-        }, 1000);
-    }
-    
-    // PREDIKSI OTOMATIS
-    function lakukanPrediksiOtomatis() {
-        if (predictionChecked || autoPredictionTriggered) {
-            console.log('Prediksi sudah ada, skip auto prediksi');
-            return;
-        }
-        
-        console.log('🤖 Menjalankan prediksi otomatis...');
-        autoPredictionTriggered = true;
-        
-        const btn = document.getElementById('prediksiBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Prediksi Otomatis...';
-        btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-        
-        fetch('/api/admin/lakukan-prediksi', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ auto: true })
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Hasil auto prediksi:', data);
-            
-            if (data.success) {
-                displayPredictionResult(data);
-                updateNotifications(); // Update notifikasi setelah auto prediksi berhasil
-                predictionChecked = true;
-                
-                btn.disabled = true;
-                btn.innerHTML = '<i class="bi bi-check-circle"></i> Prediksi Selesai';
-                btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-                btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                
-                cekStatusPrediksi();
-                stopAllIntervals();
-            } else {
-                console.error('Auto prediksi gagal:', data.message);
-                autoPredictionTriggered = false;
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-magic"></i> Coba Lagi';
-                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                btn.classList.add('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-            }
-        })
-        .catch(error => {
-            console.error('Error auto prediksi:', error);
-            autoPredictionTriggered = false;
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-magic"></i> Coba Lagi';
-            btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-            btn.classList.add('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-        });
-    }
-    
-    // FUNGSI UNTUK MENGHENTIKAN SEMUA INTERVAL
-    function stopAllIntervals() {
-        if (intensiveInterval) {
-            clearInterval(intensiveInterval);
-            intensiveInterval = null;
-        }
-        if (statusCheckInterval) {
-            clearInterval(statusCheckInterval);
-            statusCheckInterval = null;
-        }
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-        }
-        console.log('Semua interval telah dihentikan');
-    }
+
     
     function displayPredictionResult(data) {
         document.getElementById('periodeData').innerHTML = `Periode: ${data.periode}`;
@@ -689,129 +603,11 @@ function loadPaymentChart() {
         rekomendasiContainer.innerHTML = rekomendasiHtml;
     }
     
-    function loadLatestPrediction() {
-        fetch('/api/admin/prediction-latest')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Load latest prediction:', data);
-                
-                if (data.has_prediction && data.data) {
-                    displayPredictionResult(data);
-                    predictionChecked = true;
-                    autoPredictionTriggered = true;
-                    
-                    const btn = document.getElementById('prediksiBtn');
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Prediksi Selesai';
-                    btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-                    btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                    
-                    stopAllIntervals();
-                }
-            })
-            .catch(err => console.error('Error load latest:', err));
-    }
-    
-    function startPollingPrediction() {
-        if (pollingInterval) return;
-        
-        pollingInterval = setInterval(() => {
-            if (!predictionChecked) {
-                fetch('/api/admin/prediction-latest')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.has_prediction) {
-                            clearInterval(pollingInterval);
-                            pollingInterval = null;
-                            displayPredictionResult(data);
-                            updateNotifications(); // Update notifikasi
-                            predictionChecked = true;
-                            autoPredictionTriggered = true;
-                            
-                            const btn = document.getElementById('prediksiBtn');
-                            btn.disabled = true;
-                            btn.innerHTML = '<i class="bi bi-check-circle"></i> Prediksi Selesai';
-                            btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-                            btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                            
-                            stopAllIntervals();
-                        }
-                    })
-                    .catch(err => console.error('Polling error:', err));
-            } else {
-                if (pollingInterval) {
-                    clearInterval(pollingInterval);
-                    pollingInterval = null;
-                }
-            }
-        }, 5000);
-    }
-    
     function cekStatusPrediksi() {
-        fetch('/api/admin/prediction-status')
-            .then(response => response.json())
-            .then(data => {
-                const btn = document.getElementById('prediksiBtn');
-                
-                console.log('Status:', data);
-                
-                // Update notifikasi setiap kali cek status
-                updateNotifications();
-                
-                // PRIORITAS 1: SUDAH ADA PREDIKSI
-                if (data.has_prediction) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Prediksi Selesai';
-                    btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                    btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-                    
-                    if (!predictionChecked) {
-                        loadLatestPrediction();
-                        predictionChecked = true;
-                    }
-                    
-                    stopAllIntervals();
-                    return;
-                }
-                
-                // PRIORITAS 2: MASIH BISA PREDIKSI MANUAL (sebelum deadline)
-                if (data.can_predict && data.is_prediction_day && data.is_before_deadline) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-magic"></i> Lakukan Prediksi Manual';
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                    btn.classList.add('bg-yellow-400', 'hover:bg-yellow-500', 'text-gray-900');
-                    return;
-                }
-                
-                // PRIORITAS 3: SUDAH LEWAT DEADLINE - JALANKAN AUTO PREDIKSI LANGSUNG
-                if (data.is_prediction_day && !data.is_before_deadline && !data.has_prediction) {
-                    if (data.need_auto_prediction && !autoPredictionTriggered && !predictionChecked) {
-                        console.log('Deadline tercapai! Menjalankan prediksi otomatis...');
-                        
-                        btn.disabled = true;
-                        btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Prediksi Otomatis...';
-                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                        
-                        if (intensiveInterval) {
-                            clearInterval(intensiveInterval);
-                            intensiveInterval = null;
-                        }
-                        
-                        lakukanPrediksiOtomatis();
-                    } else {
-                        btn.disabled = true;
-                        btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Menunggu Prediksi...';
-                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-                    }
-                    return;
-                }
-                
-                // PRIORITAS 4: BUKAN HARI PREDIKSI
-                btn.disabled = true;
-                btn.innerHTML = '<i class="bi bi-calendar-x"></i> Prediksi Tidak Tersedia';
-                btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
-            })
-            .catch(err => console.error('Error cek status:', err));
+        // Tombol Lakukan Prediksi selalu aktif sekarang.
+        // Fungsi ini hanya digunakan untuk sinkronisasi jika diperlukan di masa depan.
+        // Update notifikasi secara reguler cukup menggunakan updateNotifications().
+        updateNotifications();
     }
     
     // ==================== EVENT LISTENERS ====================
@@ -821,12 +617,11 @@ function loadPaymentChart() {
     
     document.addEventListener('DOMContentLoaded', function() {
         loadFilterOptions();
-        cekStatusPrediksi();
         
         // Update notifikasi pertama kali
         updateNotifications();
         
-        // Update notifikasi setiap 5 detik
+        // Update notifikasi setiap 5 detik (hanya notifikasi, tombol tidak terpengaruh)
         setInterval(() => {
             updateNotifications();
         }, 5000);
@@ -837,23 +632,6 @@ function loadPaymentChart() {
                 updateNotifications();
             }
         });
-        
-        if (statusCheckInterval) {
-            clearInterval(statusCheckInterval);
-        }
-        statusCheckInterval = setInterval(cekStatusPrediksi, 2000);
-        
-        loadLatestPrediction();
-        
-        fetch('/api/admin/prediction-status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.is_prediction_day && !data.has_prediction && data.is_before_deadline) {
-                    console.log('Memulai intensive check untuk auto prediksi');
-                    startIntensiveCheck();
-                }
-            })
-            .catch(err => console.error('Error cek intensive:', err));
     });
 </script>
 @endpush
